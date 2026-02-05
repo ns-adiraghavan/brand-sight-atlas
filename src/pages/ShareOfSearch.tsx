@@ -73,49 +73,47 @@ export default function ShareOfSearch() {
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-6">
-            {/* Primary Metric - Average Rank */}
+          {/* Fixed derived metrics: SoS Presence %, Page 1 Presence %, Average Search Rank */}
+          <div className="grid grid-cols-4 gap-6">
+            {/* Primary Metric - Average Search Rank */}
             <div className="text-center border-r border-border pr-6">
               <p className="text-5xl font-bold text-foreground">#{sosKPIs.avgSearchRank.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">Average Rank</p>
+              <p className="text-sm text-muted-foreground mt-1">Average Search Rank</p>
               <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${sosKPIs.avgSearchRank.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
                 {sosKPIs.avgSearchRank.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {sosKPIs.avgSearchRank.trend.value} positions
               </div>
             </div>
             
-            {/* Rank Distribution Metrics */}
+            {/* SoS Presence % (rank ≤ 25) */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Eye className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">SoS Presence %</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">
+                {Math.round((sosKPIs.keywordsInTop10.value + (sosKPIs.keywordsTracked.value - sosKPIs.keywordsInTop10.value - sosKPIs.keywordsBelowTop20.value)) / sosKPIs.keywordsTracked.value * 100)}%
+              </p>
+              <span className="text-xs text-muted-foreground">rank ≤ 25</span>
+            </div>
+            
+            {/* Page 1 Presence % (rank ≤ 10) */}
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 className="w-4 h-4 text-status-success" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 3</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Page 1 Presence %</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop3.value}</p>
-              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop3.trend.value} this week</span>
+              <p className="text-2xl font-semibold text-foreground">
+                {Math.round(sosKPIs.keywordsInTop10.value / sosKPIs.keywordsTracked.value * 100)}%
+              </p>
+              <span className="text-xs text-muted-foreground">rank ≤ 10</span>
             </div>
             
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="w-4 h-4 text-status-info" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 10</span>
-              </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop10.value}</p>
-              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop10.trend.value} this week</span>
-            </div>
-            
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="w-4 h-4 text-status-error" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Below Top 20</span>
-              </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsBelowTop20.value}</p>
-              <span className="text-xs text-status-success">-{Math.abs(sosKPIs.keywordsBelowTop20.trend.value)} this week</span>
-            </div>
-            
+            {/* Keywords Tracked */}
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
                 <Hash className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Tracked</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Keywords Tracked</span>
               </div>
               <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsTracked.value}</p>
               <span className="text-xs text-status-success">+{sosKPIs.keywordsTracked.trend.value} new</span>
