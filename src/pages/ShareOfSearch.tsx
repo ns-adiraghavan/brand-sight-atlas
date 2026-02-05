@@ -1,135 +1,237 @@
- import { DashboardLayout } from "@/components/layout/DashboardLayout";
- import { InlineInsight } from "@/components/dashboard/InlineInsight";
- import { RankedList } from "@/components/dashboard/RankedList";
- import { Search, TrendingUp, TrendingDown, Hash, Target } from "lucide-react";
- import { sosKPIs, sosTopPerformers, sosBottomPerformers, sosInsights } from "@/data/mockData";
- 
- export default function ShareOfSearch() {
-   return (
-     <DashboardLayout>
-       <div className="space-y-6">
-         {/* LEVEL 1: Summary - Search performance at a glance */}
-         <div className="bg-card rounded-xl border border-border p-6">
-           <div className="flex items-center gap-3 mb-6">
-             <div className="p-2.5 rounded-lg bg-primary/10">
-               <Search className="w-5 h-5 text-primary" />
-             </div>
-             <div>
-               <h2 className="text-lg font-semibold text-foreground">Search Performance</h2>
-               <p className="text-sm text-muted-foreground">Keyword rankings across all tracked search terms</p>
-             </div>
-           </div>
-           
-           <div className="grid grid-cols-4 gap-6">
-             {/* Primary Metric - Average Rank */}
-             <div className="text-center border-r border-border pr-6">
-               <p className="text-5xl font-bold text-foreground">#{sosKPIs.avgSearchRank.value}</p>
-               <p className="text-sm text-muted-foreground mt-1">Average Search Rank</p>
-               <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${sosKPIs.avgSearchRank.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                 {sosKPIs.avgSearchRank.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                 {sosKPIs.avgSearchRank.trend.value} positions
-               </div>
-               <p className="text-xs text-muted-foreground mt-1">lower is better</p>
-             </div>
-             
-             {/* Secondary Metrics */}
-             <div className="flex flex-col justify-center">
-               <div className="flex items-center gap-2 mb-1">
-                 <Hash className="w-4 h-4 text-muted-foreground" />
-                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Keywords Tracked</span>
-               </div>
-               <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsTracked.value}</p>
-               <span className="text-xs text-status-success">+{sosKPIs.keywordsTracked.trend.value} new this week</span>
-             </div>
-             
-             <div className="flex flex-col justify-center">
-               <div className="flex items-center gap-2 mb-1">
-                 <Target className="w-4 h-4 text-muted-foreground" />
-                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Brand Share</span>
-               </div>
-               <p className="text-2xl font-semibold text-foreground">{sosKPIs.brandShare.value}%</p>
-               <span className={`text-xs ${sosKPIs.brandShare.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                 {sosKPIs.brandShare.trend.direction === "up" ? "+" : "-"}{sosKPIs.brandShare.trend.value}% WoW
-               </span>
-             </div>
-             
-             <div className="flex flex-col justify-center">
-               <div className="flex items-center gap-2 mb-1">
-                 <Search className="w-4 h-4 text-muted-foreground" />
-                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Organic Share</span>
-               </div>
-               <p className="text-2xl font-semibold text-foreground">{sosKPIs.organicShare.value}%</p>
-               <span className={`text-xs ${sosKPIs.organicShare.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                 {sosKPIs.organicShare.trend.direction === "up" ? "+" : "-"}{sosKPIs.organicShare.trend.value}% WoW
-               </span>
-             </div>
-           </div>
-         </div>
- 
-         {/* LEVEL 2: Breakdown - Rankings by search type */}
-         <div className="bg-card rounded-xl border border-border p-6">
-           <div className="mb-5">
-             <h3 className="text-base font-semibold text-foreground">Ranking Distribution by Search Type</h3>
-             <p className="text-sm text-muted-foreground">Performance across organic, sponsored, and brand sponsored results</p>
-           </div>
-           
-           <div className="grid grid-cols-3 gap-4">
-             {[
-               { label: "Organic", value: sosKPIs.organicShare.value, trend: sosKPIs.organicShare.trend, desc: "Natural search results" },
-               { label: "Sponsored", value: sosKPIs.sponsoredShare.value, trend: sosKPIs.sponsoredShare.trend, desc: "Paid ad placements" },
-               { label: "Brand Sponsored", value: sosKPIs.brandShare.value, trend: sosKPIs.brandShare.trend, desc: "Brand-specific ads" },
-             ].map((item) => (
-               <div key={item.label} className="bg-muted/30 rounded-lg p-4">
-                 <div className="flex items-center justify-between mb-2">
-                   <span className="text-sm font-medium text-foreground">{item.label}</span>
-                   <span className={`text-xs font-medium ${item.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                     {item.trend.direction === "up" ? "↑" : "↓"} {item.trend.value}%
-                   </span>
-                 </div>
-                 <p className="text-3xl font-bold text-foreground">{item.value}%</p>
-                 <p className="text-xs text-muted-foreground mt-1">{item.desc}</p>
-                 {/* Progress bar */}
-                 <div className="mt-3 h-2 bg-muted rounded-full overflow-hidden">
-                   <div 
-                     className="h-full bg-primary rounded-full transition-all"
-                     style={{ width: `${item.value}%` }}
-                   />
-                 </div>
-               </div>
-             ))}
-           </div>
-         </div>
- 
-         {/* LEVEL 3: Diagnostics - Insights + Rankings */}
-         <div className="grid grid-cols-3 gap-6">
-           {/* Insights Column */}
-           <div className="col-span-1 space-y-3">
-             <h3 className="text-sm font-semibold text-foreground mb-3">Recent Insights</h3>
-             {sosInsights.map((insight) => (
-               <InlineInsight
-                 key={insight.id}
-                 type={insight.type}
-                 title={insight.title}
-                 description={insight.description}
-               />
-             ))}
-           </div>
-           
-           {/* Rankings - Side by side */}
-           <div className="col-span-2 grid grid-cols-2 gap-4">
-             <RankedList
-               title="Top Performers"
-               subtitle="Best search positions"
-               items={sosTopPerformers.slice(0, 4)}
-             />
-             <RankedList
-               title="Needs Attention"
-               subtitle="Lowest search positions"
-               items={sosBottomPerformers.slice(0, 4)}
-             />
-           </div>
-         </div>
-       </div>
-     </DashboardLayout>
-   );
- }
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { InlineInsight } from "@/components/dashboard/InlineInsight";
+import { RankedList } from "@/components/dashboard/RankedList";
+import { Search, TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react";
+import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers, sosInsights } from "@/data/mockData";
+
+const getRankColor = (rank: number) => {
+  if (rank <= 3) return "text-status-success";
+  if (rank <= 10) return "text-status-info";
+  if (rank <= 20) return "text-status-warning";
+  return "text-status-error";
+};
+
+const getRankBg = (rank: number) => {
+  if (rank <= 3) return "bg-status-success/10";
+  if (rank <= 10) return "bg-status-info/10";
+  if (rank <= 20) return "bg-status-warning/10";
+  return "bg-status-error/10";
+};
+
+const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
+  if (trend === "up") return <ArrowUp className="w-3 h-3 text-status-success" />;
+  if (trend === "down") return <ArrowDown className="w-3 h-3 text-status-error" />;
+  return <Minus className="w-3 h-3 text-muted-foreground" />;
+};
+
+export default function ShareOfSearch() {
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* LEVEL 1: Summary - Rank performance at a glance */}
+        <div className="bg-card rounded-xl border border-border p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2.5 rounded-lg bg-primary/10">
+              <Search className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Search Rank Performance</h2>
+              <p className="text-sm text-muted-foreground">Position tracking across {sosKPIs.keywordsTracked.value} keywords</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-5 gap-6">
+            {/* Primary Metric - Average Rank */}
+            <div className="text-center border-r border-border pr-6">
+              <p className="text-5xl font-bold text-foreground">#{sosKPIs.avgSearchRank.value}</p>
+              <p className="text-sm text-muted-foreground mt-1">Average Rank</p>
+              <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${sosKPIs.avgSearchRank.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
+                {sosKPIs.avgSearchRank.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                {sosKPIs.avgSearchRank.trend.value} positions
+              </div>
+            </div>
+            
+            {/* Rank Distribution Metrics */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="w-4 h-4 text-status-success" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 3</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop3.value}</p>
+              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop3.trend.value} this week</span>
+            </div>
+            
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="w-4 h-4 text-status-info" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 10</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop10.value}</p>
+              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop10.trend.value} this week</span>
+            </div>
+            
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <BarChart3 className="w-4 h-4 text-status-error" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Below Top 20</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsBelowTop20.value}</p>
+              <span className="text-xs text-status-success">-{Math.abs(sosKPIs.keywordsBelowTop20.trend.value)} this week</span>
+            </div>
+            
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Hash className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Tracked</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsTracked.value}</p>
+              <span className="text-xs text-status-success">+{sosKPIs.keywordsTracked.trend.value} new</span>
+            </div>
+          </div>
+        </div>
+
+        {/* LEVEL 2: Breakdown - Rank Distribution + Visibility by Result Type */}
+        <div className="grid grid-cols-2 gap-6">
+          {/* Rank Distribution */}
+          <div className="bg-card rounded-xl border border-border p-6">
+            <div className="mb-5">
+              <h3 className="text-base font-semibold text-foreground">Rank Distribution</h3>
+              <p className="text-sm text-muted-foreground">Keywords grouped by position bucket</p>
+            </div>
+          
+            <div className="space-y-3">
+              {sosRankDistribution.map((bucket) => (
+                <div key={bucket.bucket} className="flex items-center gap-4">
+                  <span className="text-sm font-medium text-foreground w-20">{bucket.bucket}</span>
+                  <div className="flex-1 h-8 bg-muted/30 rounded overflow-hidden relative">
+                    <div 
+                      className={`h-full rounded transition-all ${
+                        bucket.bucket === "Top 3" ? "bg-status-success/60" :
+                        bucket.bucket === "4-10" ? "bg-status-info/60" :
+                        bucket.bucket === "11-20" ? "bg-status-warning/60" :
+                        "bg-status-error/60"
+                      }`}
+                      style={{ width: `${bucket.pctOfTotal}%` }}
+                    />
+                    <span className="absolute inset-0 flex items-center justify-center text-xs font-medium text-foreground">
+                      {bucket.count} keywords
+                    </span>
+                  </div>
+                  <span className="text-sm text-muted-foreground w-12 text-right">{bucket.pctOfTotal}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Visibility by Result Type */}
+          <div className="bg-card rounded-xl border border-border p-6">
+            <div className="mb-5">
+              <h3 className="text-base font-semibold text-foreground">Visibility by Result Type</h3>
+              <p className="text-sm text-muted-foreground">Presence in organic vs sponsored results</p>
+            </div>
+            
+            <div className="space-y-4">
+              {sosVisibilityByType.map((item) => (
+                <div key={item.type} className="bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Eye className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">{item.type}</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">Avg Rank: #{item.avgRank}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">{item.keywordsPresent}</p>
+                      <p className="text-xs text-muted-foreground">keywords present</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-status-success">{item.inTop10}</p>
+                      <p className="text-xs text-muted-foreground">in top 10</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* LEVEL 2.5: Keyword Rank Tracking Table */}
+        <div className="bg-card rounded-xl border border-border p-6">
+          <div className="mb-5">
+            <h3 className="text-base font-semibold text-foreground">Keyword Rankings</h3>
+            <p className="text-sm text-muted-foreground">Individual keyword position tracking</p>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Keyword</th>
+                  <th className="text-center text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Rank</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Result Type</th>
+                  <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Product</th>
+                  <th className="text-center text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Trend</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sosKeywordRankings.slice(0, 8).map((item, idx) => (
+                  <tr key={idx} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
+                    <td className="py-3 px-2">
+                      <span className="text-sm font-medium text-foreground">{item.keyword}</span>
+                    </td>
+                    <td className="py-3 px-2 text-center">
+                      <span className={`inline-flex items-center justify-center w-10 h-7 rounded text-sm font-bold ${getRankBg(item.rank)} ${getRankColor(item.rank)}`}>
+                        #{item.rank}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="text-sm text-muted-foreground">{item.resultType}</span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="text-sm text-foreground">{item.product}</span>
+                    </td>
+                    <td className="py-3 px-2 text-center">
+                      <TrendIcon trend={item.trend} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button className="mt-4 text-sm text-primary hover:underline">View all {sosKPIs.keywordsTracked.value} keywords →</button>
+          </div>
+        </div>
+
+        {/* LEVEL 3: Diagnostics - Insights + Rankings */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* Insights Column */}
+          <div className="col-span-1 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground mb-3">Recent Insights</h3>
+            {sosInsights.map((insight) => (
+              <InlineInsight
+                key={insight.id}
+                type={insight.type}
+                title={insight.title}
+                description={insight.description}
+              />
+            ))}
+          </div>
+          
+          {/* Rankings - Side by side */}
+          <div className="col-span-2 grid grid-cols-2 gap-4">
+            <RankedList
+              title="Best Positions"
+              subtitle="Highest ranking keywords"
+              items={sosTopPerformers.slice(0, 4)}
+            />
+            <RankedList
+              title="Needs Attention"
+              subtitle="Lowest ranking keywords"
+              items={sosBottomPerformers.slice(0, 4)}
+            />
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
+  );
+}

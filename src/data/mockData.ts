@@ -207,42 +207,43 @@
    },
  ];
  
- // === SHARE OF SEARCH (SoS) Mock Data ===
- export const sosKPIs = {
-   brandShare: { value: 34.2, trend: { value: 3.4, direction: "up" as const } },
-   organicShare: { value: 28.7, trend: { value: 1.2, direction: "up" as const } },
-   sponsoredShare: { value: 41.5, trend: { value: -2.1, direction: "down" as const } },
-   avgSearchRank: { value: 4.2, trend: { value: 0.8, direction: "up" as const } },
-   keywordsTracked: { value: 156, trend: { value: 12, direction: "up" as const } },
+// === SHARE OF SEARCH (SoS) Mock Data - Rank-Centric ===
+export const sosKPIs = {
+  avgSearchRank: { value: 4.2, trend: { value: 0.8, direction: "up" as const } },
+  keywordsTracked: { value: 156, trend: { value: 12, direction: "up" as const } },
+  keywordsInTop3: { value: 42, trend: { value: 5, direction: "up" as const } },
+  keywordsInTop10: { value: 89, trend: { value: 8, direction: "up" as const } },
+  keywordsBelowTop20: { value: 23, trend: { value: -4, direction: "down" as const } },
  };
  
- export const sosHeatmapData: Record<string, Record<string, { value: number; level: "excellent" | "good" | "moderate" | "poor" | "critical" }>> = {
-   "Shampoo": {
-     "Brand Sponsored": { value: 42, level: "excellent" },
-     "Sponsored": { value: 28, level: "good" },
-     "Organic": { value: 18, level: "moderate" },
-   },
-   "Body Wash": {
-     "Brand Sponsored": { value: 38, level: "good" },
-     "Sponsored": { value: 31, level: "good" },
-     "Organic": { value: 24, level: "good" },
-   },
-   "Detergent": {
-     "Brand Sponsored": { value: 35, level: "good" },
-     "Sponsored": { value: 22, level: "moderate" },
-     "Organic": { value: 31, level: "good" },
-   },
-   "Tea": {
-     "Brand Sponsored": { value: 28, level: "good" },
-     "Sponsored": { value: 19, level: "moderate" },
-     "Organic": { value: 38, level: "good" },
-   },
-   "Instant Noodles": {
-     "Brand Sponsored": { value: 15, level: "poor" },
-     "Sponsored": { value: 12, level: "poor" },
-     "Organic": { value: 8, level: "critical" },
-   },
- };
+// Rank distribution data - how keywords are distributed across rank buckets
+export const sosRankDistribution = [
+  { bucket: "Top 3", count: 42, pctOfTotal: 27 },
+  { bucket: "4-10", count: 47, pctOfTotal: 30 },
+  { bucket: "11-20", count: 44, pctOfTotal: 28 },
+  { bucket: "Below 20", count: 23, pctOfTotal: 15 },
+];
+
+// Visibility by result type - presence counts, not shares
+export const sosVisibilityByType = [
+  { type: "Organic", keywordsPresent: 89, avgRank: 6.2, inTop10: 52 },
+  { type: "Sponsored", keywordsPresent: 67, avgRank: 3.8, inTop10: 48 },
+  { type: "Brand Sponsored", keywordsPresent: 43, avgRank: 2.1, inTop10: 38 },
+];
+
+// Keyword-level rank tracking
+export const sosKeywordRankings = [
+  { keyword: "shampoo for dry hair", rank: 1, resultType: "Organic", product: "Dove Shampoo 340ml", trend: "stable" as const },
+  { keyword: "best detergent", rank: 2, resultType: "Brand Sponsored", product: "Surf Excel Easy Wash", trend: "up" as const },
+  { keyword: "tea bags", rank: 3, resultType: "Organic", product: "Lipton Yellow Label", trend: "stable" as const },
+  { keyword: "face wash for men", rank: 4, resultType: "Sponsored", product: "Pond's Face Wash", trend: "up" as const },
+  { keyword: "dishwash liquid", rank: 5, resultType: "Brand Sponsored", product: "Vim Dishwash Gel", trend: "down" as const },
+  { keyword: "body lotion", rank: 7, resultType: "Organic", product: "Vaseline Body Lotion", trend: "up" as const },
+  { keyword: "hair oil", rank: 12, resultType: "Sponsored", product: "Clinic Plus Hair Oil", trend: "down" as const },
+  { keyword: "instant noodles spicy", rank: 47, resultType: "Organic", product: "Maggi Hot Heads", trend: "down" as const },
+  { keyword: "premium tea", rank: 38, resultType: "Organic", product: "Brooke Bond Red Label", trend: "down" as const },
+  { keyword: "fabric softener", rank: 29, resultType: "Sponsored", product: "Comfort Fabric Conditioner", trend: "down" as const },
+];
  
  export const sosTopPerformers = [
    {
@@ -344,22 +345,22 @@
    {
      id: "1",
      type: "alert" as const,
-     title: "Lost #1 position: Instant Noodles",
-     description: "Competition has taken top organic positions for key instant noodles keywords.",
+    title: "Rank drop: Instant Noodles keywords",
+    description: "3 keywords dropped below position 20 in organic results this week.",
      timestamp: "3 hours ago",
    },
    {
      id: "2",
      type: "warning" as const,
-     title: "Sponsored share declining",
-     description: "Sponsored visibility down 2.1% WoW. Consider bid optimization.",
+    title: "Declining visibility in Sponsored",
+    description: "12 keywords lost sponsored placement. Review bid strategy.",
      timestamp: "6 hours ago",
    },
    {
      id: "3",
      type: "info" as const,
-     title: "Brand share improving",
-     description: "Overall brand share up 3.4% driven by organic gains in Personal Care.",
+    title: "Strong organic performance",
+    description: "5 new keywords entered top 3 organic positions this week.",
      timestamp: "1 day ago",
    },
  ];
