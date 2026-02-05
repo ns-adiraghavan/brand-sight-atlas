@@ -113,15 +113,18 @@ export default function OnlineAvailability() {
                  <span className="text-xs text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
                </div>
              </div>
-           </div>
-         </div>
- 
-         {/* LEVEL 2: Primary Visual - Pincode Availability */}
-         <div className="bg-card rounded-xl border border-border p-6">
-           <div className="mb-5">
-             <h3 className="text-base font-semibold text-foreground">Pincode Availability</h3>
-             <p className="text-sm text-muted-foreground">SKU availability by geographic location and merchant</p>
-           </div>
+          </div>
+        </div>
+
+        {/* LEVEL 2: Primary Temporal Visual */}
+        <AvailabilityTrendChart />
+
+        {/* LEVEL 2.5: Pincode Availability */}
+        <div className="bg-card rounded-xl border border-border p-6">
+          <div className="mb-5">
+            <h3 className="text-base font-semibold text-foreground">Pincode Availability</h3>
+            <p className="text-sm text-muted-foreground">SKU availability by geographic location and merchant</p>
+          </div>
            
            <div className="grid grid-cols-2 gap-3">
              {olaPincodeData.map((item) => (
