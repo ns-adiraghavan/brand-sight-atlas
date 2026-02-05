@@ -24,16 +24,19 @@
  
  export function RankedList({ title, subtitle, items, className, maxItems = 5 }: RankedListProps) {
    const displayItems = items.slice(0, maxItems);
+   const hasHeader = title || subtitle;
  
    return (
      <div className={cn("bg-card rounded-lg border border-border p-5", className)}>
-       <div className="flex items-center justify-between mb-4">
-         <div>
-           <h3 className="text-base font-semibold text-foreground">{title}</h3>
-           {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+       {hasHeader && (
+         <div className="flex items-center justify-between mb-4">
+           <div>
+             {title && <h3 className="text-base font-semibold text-foreground">{title}</h3>}
+             {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+           </div>
+           <button className="text-sm text-primary hover:underline">View All</button>
          </div>
-         <button className="text-sm text-primary hover:underline">View All</button>
-       </div>
+       )}
  
        <div className="space-y-3">
          {displayItems.map((item) => (

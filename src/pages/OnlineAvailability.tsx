@@ -1,8 +1,11 @@
  import { DashboardLayout } from "@/components/layout/DashboardLayout";
- import { KPICard } from "@/components/dashboard/KPICard";
+ import { HeroMetric } from "@/components/dashboard/HeroMetric";
+ import { CompactKPI } from "@/components/dashboard/CompactKPI";
+ import { InlineInsight } from "@/components/dashboard/InlineInsight";
+ import { SectionHeader } from "@/components/dashboard/SectionHeader";
  import { Heatmap } from "@/components/dashboard/Heatmap";
  import { RankedList } from "@/components/dashboard/RankedList";
- import { InsightPanel } from "@/components/dashboard/InsightPanel";
+ import { Package, AlertTriangle } from "lucide-react";
  import { olaKPIs, olaHeatmapData, olaLowAvailabilitySKUs, olaInsights } from "@/data/mockData";
  
  export default function OnlineAvailability() {
@@ -11,82 +14,98 @@
  
    return (
      <DashboardLayout>
-       <div className="flex gap-6">
-         {/* Main Content */}
-         <div className="flex-1 space-y-6">
-           {/* KPI Cards */}
-           <div className="grid grid-cols-5 gap-4">
-             <KPICard
-               label="Overall Availability"
-               value={`${olaKPIs.overallAvailability.value}%`}
-               trend={olaKPIs.overallAvailability.trend}
-               subtitle="vs last week"
-             />
-             <KPICard
-               label="Top Packs"
-               value={`${olaKPIs.topPacksAvailability.value}%`}
-               trend={olaKPIs.topPacksAvailability.trend}
-               subtitle="vs last week"
-             />
-             <KPICard
-               label="Must-Have SKUs"
-               value={`${olaKPIs.mustHaveAvailability.value}%`}
-               trend={olaKPIs.mustHaveAvailability.trend}
-               subtitle="vs last week"
-             />
-             <KPICard
-               label="New Launches"
-               value={`${olaKPIs.newLaunchAvailability.value}%`}
-               trend={olaKPIs.newLaunchAvailability.trend}
-               subtitle="vs last week"
-             />
-             <KPICard
-               label="SKUs at Risk"
-               value={olaKPIs.skusAtRisk.value}
-               trend={olaKPIs.skusAtRisk.trend}
-               subtitle="below 60% avail."
-             />
+       <div className="space-y-8">
+         {/* Hero Section - Asymmetric layout */}
+         <div className="grid grid-cols-3 gap-6">
+           {/* Hero Metric - Large */}
+           <HeroMetric
+             label="Overall Availability"
+             value={`${olaKPIs.overallAvailability.value}%`}
+             trend={olaKPIs.overallAvailability.trend}
+             subtitle="vs last week"
+             icon={<Package className="w-6 h-6" />}
+             gradient="primary"
+             className="col-span-1 row-span-2"
+           />
+           
+           {/* Stacked compact KPIs */}
+           <div className="col-span-1 bg-card rounded-xl border border-border p-5">
+             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Pack Performance</p>
+             <div className="divide-y divide-border">
+               <CompactKPI
+                 label="Top Packs"
+                 value={`${olaKPIs.topPacksAvailability.value}%`}
+                 trend={olaKPIs.topPacksAvailability.trend}
+               />
+               <CompactKPI
+                 label="Must-Have SKUs"
+                 value={`${olaKPIs.mustHaveAvailability.value}%`}
+                 trend={olaKPIs.mustHaveAvailability.trend}
+               />
+               <CompactKPI
+                 label="New Launches"
+                 value={`${olaKPIs.newLaunchAvailability.value}%`}
+                 trend={olaKPIs.newLaunchAvailability.trend}
+               />
+             </div>
            </div>
  
-           {/* Availability Heatmap */}
+           {/* Alert callout */}
+           <div className="col-span-1 bg-card rounded-xl border border-border p-5 flex flex-col justify-between">
+             <div>
+               <div className="flex items-center gap-2 mb-3">
+                 <AlertTriangle className="w-5 h-5 text-status-warning" />
+                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Attention Required</p>
+               </div>
+               <p className="text-4xl font-bold text-foreground">{olaKPIs.skusAtRisk.value}</p>
+               <p className="text-sm text-muted-foreground mt-1">SKUs below 60% availability</p>
+             </div>
+             <div className="mt-4 pt-4 border-t border-border">
+               <span className="text-xs text-status-success font-medium">
+                 ↓ {olaKPIs.skusAtRisk.trend.value} fewer than last week
+               </span>
+             </div>
+           </div>
+         </div>
+ 
+         {/* Inline Insights Row */}
+         <div className="grid grid-cols-3 gap-4">
+           {olaInsights.map((insight) => (
+             <InlineInsight
+               key={insight.id}
+               type={insight.type}
+               title={insight.title}
+               description={insight.description}
+               action="View"
+             />
+           ))}
+         </div>
+ 
+         {/* Main Content - Wide heatmap hero */}
+         <section>
+           <SectionHeader
+             title="Category × Merchant Analysis"
+             subtitle="Current week availability percentage by segment"
+           />
            <Heatmap
-             title="Availability by Category & Merchant"
-             subtitle="Current week availability percentage"
+             title=""
              data={olaHeatmapData}
              rowLabels={categories}
              colLabels={merchants}
            />
+         </section>
  
-           {/* Low Availability SKUs */}
+         {/* Bottom Section - Full width list */}
+         <section>
+           <SectionHeader
+             title="Critical SKUs"
+             subtitle="Items requiring immediate attention"
+           />
            <RankedList
-             title="Lowest Availability SKUs"
-             subtitle="SKUs requiring immediate attention"
+             title=""
              items={olaLowAvailabilitySKUs}
            />
-         </div>
- 
-         {/* Right Panel */}
-         <div className="w-80 space-y-6">
-           <InsightPanel title="Alerts & Insights" insights={olaInsights} />
- 
-           {/* Quick Stats */}
-           <div className="bg-card rounded-lg border border-border p-5">
-             <h3 className="text-sm font-semibold text-foreground mb-4">Category Breakdown</h3>
-             <div className="space-y-3">
-               {categories.map((category) => {
-                 const avgAvail = Math.round(
-                   merchants.reduce((sum, m) => sum + (olaHeatmapData[category]?.[m]?.value || 0), 0) / merchants.length
-                 );
-                 return (
-                   <div key={category} className="flex items-center justify-between">
-                     <span className="text-sm text-muted-foreground">{category}</span>
-                     <span className="text-sm font-medium text-foreground">{avgAvail}%</span>
-                   </div>
-                 );
-               })}
-             </div>
-           </div>
-         </div>
+         </section>
        </div>
      </DashboardLayout>
    );
