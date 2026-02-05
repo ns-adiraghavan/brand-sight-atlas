@@ -25,9 +25,11 @@
  };
  
  export function Heatmap({ data, rowLabels, colLabels, title, subtitle }: HeatmapProps) {
+   const hasHeader = title || subtitle;
+ 
    return (
-     <div className="bg-card rounded-lg border border-border p-5">
-       {(title || subtitle) && (
+     <div className={hasHeader ? "bg-card rounded-lg border border-border p-5" : ""}>
+       {hasHeader && (
          <div className="mb-4">
            {title && <h3 className="text-base font-semibold text-foreground">{title}</h3>}
            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
