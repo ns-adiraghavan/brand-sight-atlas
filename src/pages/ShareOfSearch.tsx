@@ -5,6 +5,7 @@ import { SearchVisibilityTrendChart } from "@/components/dashboard/SearchVisibil
 import { Search, TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
+import { CHART_LIMITS } from "@/lib/metrics";
 
 const getRankColor = (rank: number) => {
   if (rank <= 3) return "text-status-success";
@@ -28,6 +29,12 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
 
 export default function ShareOfSearch() {
   const { getTimePhrase } = useDateRange();
+
+  // Truncate data to chart limits
+  const displayRankDistribution = sosRankDistribution.slice(0, CHART_LIMITS.maxBars);
+  const displayKeywords = sosKeywordRankings.slice(0, CHART_LIMITS.maxRows);
+  const displayTopPerformers = sosTopPerformers.slice(0, 5);
+  const displayBottomPerformers = sosBottomPerformers.slice(0, 5);
 
   // Time-aware insights
   const sosInsights = [
@@ -66,49 +73,47 @@ export default function ShareOfSearch() {
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-6">
-            {/* Primary Metric - Average Rank */}
+          {/* Fixed derived metrics: SoS Presence %, Page 1 Presence %, Average Search Rank */}
+          <div className="grid grid-cols-4 gap-6">
+            {/* Primary Metric - Average Search Rank */}
             <div className="text-center border-r border-border pr-6">
               <p className="text-5xl font-bold text-foreground">#{sosKPIs.avgSearchRank.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">Average Rank</p>
+              <p className="text-sm text-muted-foreground mt-1">Average Search Rank</p>
               <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${sosKPIs.avgSearchRank.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
                 {sosKPIs.avgSearchRank.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {sosKPIs.avgSearchRank.trend.value} positions
               </div>
             </div>
             
-            {/* Rank Distribution Metrics */}
+            {/* SoS Presence % (rank ≤ 25) */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Eye className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">SoS Presence %</span>
+              </div>
+              <p className="text-2xl font-semibold text-foreground">
+                {Math.round((sosKPIs.keywordsInTop10.value + (sosKPIs.keywordsTracked.value - sosKPIs.keywordsInTop10.value - sosKPIs.keywordsBelowTop20.value)) / sosKPIs.keywordsTracked.value * 100)}%
+              </p>
+              <span className="text-xs text-muted-foreground">rank ≤ 25</span>
+            </div>
+            
+            {/* Page 1 Presence % (rank ≤ 10) */}
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
                 <BarChart3 className="w-4 h-4 text-status-success" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 3</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Page 1 Presence %</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop3.value}</p>
-              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop3.trend.value} this week</span>
+              <p className="text-2xl font-semibold text-foreground">
+                {Math.round(sosKPIs.keywordsInTop10.value / sosKPIs.keywordsTracked.value * 100)}%
+              </p>
+              <span className="text-xs text-muted-foreground">rank ≤ 10</span>
             </div>
             
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="w-4 h-4 text-status-info" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">In Top 10</span>
-              </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsInTop10.value}</p>
-              <span className="text-xs text-status-success">+{sosKPIs.keywordsInTop10.trend.value} this week</span>
-            </div>
-            
-            <div className="flex flex-col justify-center">
-              <div className="flex items-center gap-2 mb-1">
-                <BarChart3 className="w-4 h-4 text-status-error" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Below Top 20</span>
-              </div>
-              <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsBelowTop20.value}</p>
-              <span className="text-xs text-status-success">-{Math.abs(sosKPIs.keywordsBelowTop20.trend.value)} this week</span>
-            </div>
-            
+            {/* Keywords Tracked */}
             <div className="flex flex-col justify-center">
               <div className="flex items-center gap-2 mb-1">
                 <Hash className="w-4 h-4 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground uppercase tracking-wide">Total Tracked</span>
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Keywords Tracked</span>
               </div>
               <p className="text-2xl font-semibold text-foreground">{sosKPIs.keywordsTracked.value}</p>
               <span className="text-xs text-status-success">+{sosKPIs.keywordsTracked.trend.value} new</span>
@@ -121,7 +126,7 @@ export default function ShareOfSearch() {
 
         {/* LEVEL 2.5: Breakdown - Rank Distribution + Visibility by Result Type */}
         <div className="grid grid-cols-2 gap-6">
-          {/* Rank Distribution */}
+          {/* Rank Distribution - limited to maxBars */}
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="mb-5">
               <h3 className="text-base font-semibold text-foreground">Rank Distribution</h3>
@@ -129,7 +134,7 @@ export default function ShareOfSearch() {
             </div>
           
             <div className="space-y-3">
-              {sosRankDistribution.map((bucket) => (
+              {displayRankDistribution.map((bucket) => (
                 <div key={bucket.bucket} className="flex items-center gap-4">
                   <span className="text-sm font-medium text-foreground w-20">{bucket.bucket}</span>
                   <div className="flex-1 h-8 bg-muted/30 rounded overflow-hidden relative">
@@ -160,7 +165,7 @@ export default function ShareOfSearch() {
             </div>
             
             <div className="space-y-4">
-              {sosVisibilityByType.map((item) => (
+              {sosVisibilityByType.slice(0, 3).map((item) => (
                 <div key={item.type} className="bg-muted/30 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -185,7 +190,7 @@ export default function ShareOfSearch() {
           </div>
         </div>
 
-        {/* LEVEL 2.5: Keyword Rank Tracking Table */}
+        {/* LEVEL 2.5: Keyword Rank Tracking Table - limited to maxRows */}
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="mb-5">
             <h3 className="text-base font-semibold text-foreground">Keyword Rankings</h3>
@@ -204,7 +209,7 @@ export default function ShareOfSearch() {
                 </tr>
               </thead>
               <tbody>
-                {sosKeywordRankings.slice(0, 8).map((item, idx) => (
+                {displayKeywords.map((item, idx) => (
                   <tr key={idx} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-2">
                       <span className="text-sm font-medium text-foreground">{item.keyword}</span>
@@ -227,7 +232,11 @@ export default function ShareOfSearch() {
                 ))}
               </tbody>
             </table>
-            <button className="mt-4 text-sm text-primary hover:underline">View all {sosKPIs.keywordsTracked.value} keywords →</button>
+            {sosKeywordRankings.length > CHART_LIMITS.maxRows && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Showing {CHART_LIMITS.maxRows} of {sosKeywordRankings.length} keywords
+              </p>
+            )}
           </div>
         </div>
 
@@ -246,17 +255,17 @@ export default function ShareOfSearch() {
             ))}
           </div>
           
-          {/* Rankings - Side by side */}
+          {/* Rankings - Side by side, limited to 5 items each */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <RankedList
               title="Best Positions"
               subtitle="Highest ranking keywords"
-              items={sosTopPerformers.slice(0, 4)}
+              items={displayTopPerformers}
             />
             <RankedList
               title="Needs Attention"
               subtitle="Lowest ranking keywords"
-              items={sosBottomPerformers.slice(0, 4)}
+              items={displayBottomPerformers}
             />
           </div>
         </div>

@@ -1,10 +1,11 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InlineInsight } from "@/components/dashboard/InlineInsight";
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, Sparkles, MapPin, Check, X } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, MapPin, Check, X } from "lucide-react";
 import { olaKPIs, olaPincodeData, olaSkuPincodeData, olaLowAvailabilitySKUs } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
+import { CHART_LIMITS } from "@/lib/metrics";
 
 export default function OnlineAvailability() {
   const { getTimePhrase } = useDateRange();
@@ -22,6 +23,11 @@ export default function OnlineAvailability() {
     if (pct >= 50) return "bg-status-warning/10 border-status-warning/20";
     return "bg-status-error/10 border-status-error/20";
   };
+
+  // Truncate data to chart limits
+  const displayPincodeData = olaPincodeData.slice(0, CHART_LIMITS.maxRows);
+  const displaySkuData = olaSkuPincodeData.slice(0, 5);
+  const displayCriticalSKUs = olaLowAvailabilitySKUs.slice(0, CHART_LIMITS.maxRows);
 
   // Time-aware decision summaries
   const decisionSummaries = [
@@ -86,56 +92,48 @@ export default function OnlineAvailability() {
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-6">
-            {/* Primary Metric */}
-            <div className="col-span-1 text-center border-r border-border pr-6">
+          {/* Fixed derived metrics: Overall Availability %, SKUs at Risk, Pincodes Affected, Top Pack Availability % */}
+          <div className="grid grid-cols-4 gap-6">
+            {/* Primary Metric: Overall Availability % */}
+            <div className="text-center border-r border-border pr-6">
               <p className="text-5xl font-bold text-foreground">{olaKPIs.overallAvailability.value}%</p>
-              <p className="text-sm text-muted-foreground mt-1">Overall Availability</p>
+              <p className="text-sm text-muted-foreground mt-1">Overall Availability %</p>
               <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${olaKPIs.overallAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
                 {olaKPIs.overallAvailability.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {olaKPIs.overallAvailability.trend.value}% WoW
               </div>
             </div>
             
-            {/* Secondary Metrics */}
-            <div className="col-span-4 grid grid-cols-4 gap-4">
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Pincodes</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.totalPincodes.value}</p>
-                <span className="text-xs text-status-success">+{olaKPIs.totalPincodes.trend.value} new</span>
+            {/* SKUs at Risk */}
+            <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="w-4 h-4 text-status-warning" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">SKUs at Risk</span>
               </div>
-              
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Must-Have</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.mustHaveAvailability.value}%</p>
-                <span className="text-xs text-status-error">{olaKPIs.mustHaveAvailability.trend.value}%</span>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.skusAtRisk.value}</p>
+              <span className="text-xs text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
+            </div>
+            
+            {/* Pincodes Affected */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Pincodes Affected</span>
               </div>
-              
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">New Launches</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.newLaunchAvailability.value}%</p>
-                <span className={`text-xs ${olaKPIs.newLaunchAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                  {olaKPIs.newLaunchAvailability.trend.direction === "up" ? "+" : "-"}{olaKPIs.newLaunchAvailability.trend.value}%
-                </span>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.totalPincodes.value}</p>
+              <span className="text-xs text-status-success">+{olaKPIs.totalPincodes.trend.value} tracked</span>
+            </div>
+            
+            {/* Top Pack Availability % */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Star className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Top Pack Avail %</span>
               </div>
-              
-              <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3 -m-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-status-warning" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">At Risk</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.skusAtRisk.value}</p>
-                <span className="text-xs text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
-              </div>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.topPacksAvailability.value}%</p>
+              <span className={`text-xs ${olaKPIs.topPacksAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
+                {olaKPIs.topPacksAvailability.trend.direction === "up" ? "+" : ""}{olaKPIs.topPacksAvailability.trend.value}%
+              </span>
             </div>
           </div>
         </div>
@@ -151,7 +149,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            {olaPincodeData.map((item) => (
+            {displayPincodeData.map((item) => (
               <div 
                 key={item.pincode}
                 className={cn(
@@ -173,6 +171,12 @@ export default function OnlineAvailability() {
               </div>
             ))}
           </div>
+          
+          {olaPincodeData.length > CHART_LIMITS.maxRows && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Showing {CHART_LIMITS.maxRows} of {olaPincodeData.length} pincodes
+            </p>
+          )}
           
           {/* Legend */}
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
@@ -211,7 +215,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="space-y-3">
-            {olaSkuPincodeData.map((sku) => (
+            {displaySkuData.map((sku) => (
               <div key={sku.id} className="border border-border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -222,9 +226,6 @@ export default function OnlineAvailability() {
                       )}
                       {sku.topPack && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-status-info/10 text-status-info rounded">Top Pack</span>
-                      )}
-                      {sku.newLaunch && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-status-warning/10 text-status-warning rounded">New</span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">EAN: {sku.ean} • {sku.salesCategory}</p>
@@ -255,10 +256,7 @@ export default function OnlineAvailability() {
                         <p className="text-muted-foreground">{pa.merchant}</p>
                       </div>
                       {pa.available ? (
-                        <div className="text-right">
-                          <Check className="w-4 h-4 text-status-success" />
-                          {pa.salePrice && <p className="text-status-success">₹{pa.salePrice}</p>}
-                        </div>
+                        <Check className="w-4 h-4 text-status-success" />
                       ) : (
                         <X className="w-4 h-4 text-status-error" />
                       )}
@@ -278,7 +276,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="space-y-2">
-            {olaLowAvailabilitySKUs.map((item) => (
+            {displayCriticalSKUs.map((item) => (
               <div 
                 key={item.id}
                 className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
