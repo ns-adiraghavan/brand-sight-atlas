@@ -8,40 +8,117 @@
    mustHaveAvailability: { value: 84.6, trend: { value: -0.8, direction: "down" as const } },
    newLaunchAvailability: { value: 72.4, trend: { value: 5.3, direction: "up" as const } },
    skusAtRisk: { value: 47, trend: { value: 12, direction: "down" as const } },
+   totalPincodes: { value: 156, trend: { value: 8, direction: "up" as const } },
+   avgPincodeAvailability: { value: 82.1, trend: { value: 1.8, direction: "up" as const } },
  };
  
- export const olaHeatmapData: Record<string, Record<string, { value: number; level: "excellent" | "good" | "moderate" | "poor" | "critical" }>> = {
-   "Personal Care": {
-     "Amazon": { value: 94, level: "excellent" },
-     "Flipkart": { value: 88, level: "good" },
-     "BigBasket": { value: 76, level: "moderate" },
-     "Blinkit": { value: 82, level: "good" },
+ // Pincode-level availability data (based on OLA schema: Pincode, Location, Availability)
+ export const olaPincodeData = [
+   { pincode: "400001", location: "Mumbai - Fort", available: 142, total: 156, availability: 91, merchant: "Amazon" },
+   { pincode: "400053", location: "Mumbai - Andheri", available: 138, total: 156, availability: 88, merchant: "Flipkart" },
+   { pincode: "110001", location: "Delhi - Connaught Place", available: 134, total: 156, availability: 86, merchant: "BigBasket" },
+   { pincode: "560001", location: "Bangalore - MG Road", available: 128, total: 156, availability: 82, merchant: "Blinkit" },
+   { pincode: "500001", location: "Hyderabad - Secunderabad", available: 121, total: 156, availability: 78, merchant: "Amazon" },
+   { pincode: "600001", location: "Chennai - George Town", available: 118, total: 156, availability: 76, merchant: "Flipkart" },
+   { pincode: "411001", location: "Pune - Camp", available: 112, total: 156, availability: 72, merchant: "BigBasket" },
+   { pincode: "380001", location: "Ahmedabad - Lal Darwaja", available: 98, total: 156, availability: 63, merchant: "Blinkit" },
+   { pincode: "700001", location: "Kolkata - BBD Bagh", available: 89, total: 156, availability: 57, merchant: "Amazon" },
+   { pincode: "302001", location: "Jaipur - MI Road", available: 78, total: 156, availability: 50, merchant: "Flipkart" },
+ ];
+ 
+ // SKU × Pincode availability patterns (based on OLA schema)
+ export const olaSkuPincodeData = [
+   {
+     id: "1",
+     ean: "8901030736124",
+     basepack: "Dove Body Wash 250ml",
+     salesCategory: "Personal Care",
+     mustHave: true,
+     topPack: true,
+     newLaunch: false,
+     pincodeAvailability: [
+       { pincode: "400001", available: true, merchant: "Amazon", salePrice: 299, mrp: 350 },
+       { pincode: "400053", available: true, merchant: "Flipkart", salePrice: 289, mrp: 350 },
+       { pincode: "110001", available: false, merchant: "BigBasket", salePrice: null, mrp: 350 },
+       { pincode: "560001", available: false, merchant: "Blinkit", salePrice: null, mrp: 350 },
+     ],
+     totalAvailable: 2,
+     totalPincodes: 4,
+     availabilityPct: 50,
    },
-   "Home Care": {
-     "Amazon": { value: 91, level: "excellent" },
-     "Flipkart": { value: 85, level: "good" },
-     "BigBasket": { value: 69, level: "poor" },
-     "Blinkit": { value: 78, level: "moderate" },
+   {
+     id: "2",
+     ean: "8901030735929",
+     basepack: "Surf Excel Matic 2kg",
+     salesCategory: "Home Care",
+     mustHave: true,
+     topPack: true,
+     newLaunch: false,
+     pincodeAvailability: [
+       { pincode: "400001", available: true, merchant: "Amazon", salePrice: 425, mrp: 480 },
+       { pincode: "400053", available: true, merchant: "Flipkart", salePrice: 419, mrp: 480 },
+       { pincode: "110001", available: true, merchant: "BigBasket", salePrice: 435, mrp: 480 },
+       { pincode: "560001", available: false, merchant: "Blinkit", salePrice: null, mrp: 480 },
+     ],
+     totalAvailable: 3,
+     totalPincodes: 4,
+     availabilityPct: 75,
    },
-   "Foods": {
-     "Amazon": { value: 82, level: "good" },
-     "Flipkart": { value: 74, level: "moderate" },
-     "BigBasket": { value: 91, level: "excellent" },
-     "Blinkit": { value: 88, level: "good" },
+   {
+     id: "3",
+     ean: "8901030736285",
+     basepack: "Lipton Green Tea 100bags",
+     salesCategory: "Beverages",
+     mustHave: false,
+     topPack: true,
+     newLaunch: false,
+     pincodeAvailability: [
+       { pincode: "400001", available: true, merchant: "Amazon", salePrice: 320, mrp: 375 },
+       { pincode: "400053", available: false, merchant: "Flipkart", salePrice: null, mrp: 375 },
+       { pincode: "110001", available: true, merchant: "BigBasket", salePrice: 315, mrp: 375 },
+       { pincode: "560001", available: true, merchant: "Blinkit", salePrice: 329, mrp: 375 },
+     ],
+     totalAvailable: 3,
+     totalPincodes: 4,
+     availabilityPct: 75,
    },
-   "Beverages": {
-     "Amazon": { value: 78, level: "moderate" },
-     "Flipkart": { value: 65, level: "poor" },
-     "BigBasket": { value: 84, level: "good" },
-     "Blinkit": { value: 92, level: "excellent" },
+   {
+     id: "4",
+     ean: "8901030735417",
+     basepack: "Pond's Talc 400g",
+     salesCategory: "Personal Care",
+     mustHave: false,
+     topPack: false,
+     newLaunch: true,
+     pincodeAvailability: [
+       { pincode: "400001", available: true, merchant: "Amazon", salePrice: 185, mrp: 210 },
+       { pincode: "400053", available: true, merchant: "Flipkart", salePrice: 179, mrp: 210 },
+       { pincode: "110001", available: true, merchant: "BigBasket", salePrice: 189, mrp: 210 },
+       { pincode: "560001", available: true, merchant: "Blinkit", salePrice: 182, mrp: 210 },
+     ],
+     totalAvailable: 4,
+     totalPincodes: 4,
+     availabilityPct: 100,
    },
-   "Health & Beauty": {
-     "Amazon": { value: 56, level: "critical" },
-     "Flipkart": { value: 62, level: "poor" },
-     "BigBasket": { value: 71, level: "moderate" },
-     "Blinkit": { value: 68, level: "poor" },
+   {
+     id: "5",
+     ean: "8901030736551",
+     basepack: "Knorr Soups Variety Pack",
+     salesCategory: "Foods",
+     mustHave: true,
+     topPack: false,
+     newLaunch: false,
+     pincodeAvailability: [
+       { pincode: "400001", available: false, merchant: "Amazon", salePrice: null, mrp: 245 },
+       { pincode: "400053", available: true, merchant: "Flipkart", salePrice: 229, mrp: 245 },
+       { pincode: "110001", available: false, merchant: "BigBasket", salePrice: null, mrp: 245 },
+       { pincode: "560001", available: false, merchant: "Blinkit", salePrice: null, mrp: 245 },
+     ],
+     totalAvailable: 1,
+     totalPincodes: 4,
+     availabilityPct: 25,
    },
- };
+ ];
  
  export const olaLowAvailabilitySKUs = [
    {
@@ -93,6 +170,16 @@
      valueLabel: "Availability",
      status: "medium" as const,
      metadata: { Customer: "BigBasket", Location: "Chennai" },
+   },
+   {
+     id: "6",
+     rank: 6,
+     title: "Closeup Toothpaste 150g",
+     subtitle: "EAN: 8901030736789 • Personal Care",
+     value: "61%",
+     valueLabel: "Availability",
+     status: "medium" as const,
+     metadata: { Customer: "Amazon", Location: "Pune" },
    },
  ];
  
