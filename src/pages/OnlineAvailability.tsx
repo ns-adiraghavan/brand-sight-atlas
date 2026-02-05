@@ -1,63 +1,62 @@
- import { DashboardLayout } from "@/components/layout/DashboardLayout";
- import { InlineInsight } from "@/components/dashboard/InlineInsight";
- import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, Sparkles, MapPin, Check, X } from "lucide-react";
- import { olaKPIs, olaPincodeData, olaSkuPincodeData, olaLowAvailabilitySKUs, olaInsights } from "@/data/mockData";
- import { cn } from "@/lib/utils";
- 
- export default function OnlineAvailability() {
-   const getAvailabilityColor = (pct: number) => {
-     if (pct >= 90) return "bg-status-success";
-     if (pct >= 70) return "bg-status-info";
-     if (pct >= 50) return "bg-status-warning";
-     return "bg-status-error";
-   };
-   
-   const getAvailabilityBg = (pct: number) => {
-     if (pct >= 90) return "bg-status-success/10 border-status-success/20";
-     if (pct >= 70) return "bg-status-info/10 border-status-info/20";
-     if (pct >= 50) return "bg-status-warning/10 border-status-warning/20";
-     return "bg-status-error/10 border-status-error/20";
-   };
- 
-  // Generate decision summaries based on current data
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { InlineInsight } from "@/components/dashboard/InlineInsight";
+import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, Sparkles, MapPin, Check, X } from "lucide-react";
+import { olaKPIs, olaPincodeData, olaSkuPincodeData, olaLowAvailabilitySKUs } from "@/data/mockData";
+import { useDateRange } from "@/contexts/DateRangeContext";
+import { cn } from "@/lib/utils";
+
+export default function OnlineAvailability() {
+  const { getTimePhrase } = useDateRange();
+  
+  const getAvailabilityColor = (pct: number) => {
+    if (pct >= 90) return "bg-status-success";
+    if (pct >= 70) return "bg-status-info";
+    if (pct >= 50) return "bg-status-warning";
+    return "bg-status-error";
+  };
+  
+  const getAvailabilityBg = (pct: number) => {
+    if (pct >= 90) return "bg-status-success/10 border-status-success/20";
+    if (pct >= 70) return "bg-status-info/10 border-status-info/20";
+    if (pct >= 50) return "bg-status-warning/10 border-status-warning/20";
+    return "bg-status-error/10 border-status-error/20";
+  };
+
+  // Time-aware decision summaries
   const decisionSummaries = [
     olaKPIs.skusAtRisk.value > 5 
-      ? `Address ${olaKPIs.skusAtRisk.value} at-risk SKUs immediately—potential revenue loss in key pincodes`
-      : `SKU availability is stable with only ${olaKPIs.skusAtRisk.value} items requiring attention`,
+      ? `Address ${olaKPIs.skusAtRisk.value} at-risk SKUs ${getTimePhrase()}—potential revenue loss in key pincodes`
+      : `SKU availability stable ${getTimePhrase()} with only ${olaKPIs.skusAtRisk.value} items requiring attention`,
     olaKPIs.mustHaveAvailability.value < 90
-      ? `Escalate must-have SKU gaps: ${100 - olaKPIs.mustHaveAvailability.value}% unavailability impacts core assortment`
-      : `Must-have coverage at ${olaKPIs.mustHaveAvailability.value}%—maintain current replenishment cadence`,
+      ? `Escalate must-have SKU gaps: ${100 - olaKPIs.mustHaveAvailability.value}% unavailability ${getTimePhrase()} impacts core assortment`
+      : `Must-have coverage at ${olaKPIs.mustHaveAvailability.value}% ${getTimePhrase()}—maintain current replenishment cadence`,
     olaKPIs.newLaunchAvailability.value < 80
-      ? `Prioritize new launch distribution: ${olaKPIs.newLaunchAvailability.value}% availability limits market penetration`
-      : `New launches performing well at ${olaKPIs.newLaunchAvailability.value}% availability across pincodes`,
+      ? `Prioritize new launch distribution: ${olaKPIs.newLaunchAvailability.value}% availability ${getTimePhrase()} limits market penetration`
+      : `New launches performing well at ${olaKPIs.newLaunchAvailability.value}% availability ${getTimePhrase()}`,
   ];
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Decision Summary */}
-        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
-          <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Decision Summary</h2>
-          <ul className="space-y-2">
-            {decisionSummaries.map((summary, index) => (
-              <li key={index} className="flex items-start gap-3">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
-                <span className="text-sm text-foreground leading-relaxed">{summary}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-         {/* LEVEL 1: Summary - Single glanceable row */}
-         <div className="bg-card rounded-xl border border-border p-6">
-           <div className="flex items-center gap-3 mb-6">
-             <div className="p-2.5 rounded-lg bg-primary/10">
-               <Package className="w-5 h-5 text-primary" />
-             </div>
-             <div>
-               <h2 className="text-lg font-semibold text-foreground">Availability Overview</h2>
-               <p className="text-sm text-muted-foreground">SKU availability across {olaKPIs.totalPincodes.value} tracked pincodes</p>
-             </div>
-           </div>
+  // Time-aware insights
+  const olaInsights = [
+    {
+      id: "1",
+      type: "alert" as const,
+      title: "Critical stockout: Dove Body Wash",
+      description: `Availability dropped below 25% across 3 merchants ${getTimePhrase()}.`,
+    },
+    {
+      id: "2",
+      type: "warning" as const,
+      title: "Must-Have SKUs declining",
+      description: `Must-Have availability down 0.8% week-over-week. 12 SKUs below threshold ${getTimePhrase()}.`,
+    },
+    {
+      id: "3",
+      type: "info" as const,
+      title: "New Launch performance",
+      description: `New launches showing strong availability growth at +5.3% ${getTimePhrase()}.`,
+    },
+  ];
            
            <div className="grid grid-cols-5 gap-6">
              {/* Primary Metric */}
