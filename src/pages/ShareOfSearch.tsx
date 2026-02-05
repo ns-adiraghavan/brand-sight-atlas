@@ -5,6 +5,7 @@ import { SearchVisibilityTrendChart } from "@/components/dashboard/SearchVisibil
 import { Search, TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
+import { CHART_LIMITS } from "@/lib/metrics";
 
 const getRankColor = (rank: number) => {
   if (rank <= 3) return "text-status-success";
@@ -28,6 +29,12 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
 
 export default function ShareOfSearch() {
   const { getTimePhrase } = useDateRange();
+
+  // Truncate data to chart limits
+  const displayRankDistribution = sosRankDistribution.slice(0, CHART_LIMITS.maxBars);
+  const displayKeywords = sosKeywordRankings.slice(0, CHART_LIMITS.maxRows);
+  const displayTopPerformers = sosTopPerformers.slice(0, 5);
+  const displayBottomPerformers = sosBottomPerformers.slice(0, 5);
 
   // Time-aware insights
   const sosInsights = [

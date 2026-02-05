@@ -276,7 +276,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="space-y-2">
-            {olaLowAvailabilitySKUs.map((item) => (
+            {displayCriticalSKUs.map((item) => (
               <div 
                 key={item.id}
                 className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
