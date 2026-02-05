@@ -1,10 +1,11 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InlineInsight } from "@/components/dashboard/InlineInsight";
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
-import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, Sparkles, MapPin, Check, X } from "lucide-react";
+import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, MapPin, Check, X } from "lucide-react";
 import { olaKPIs, olaPincodeData, olaSkuPincodeData, olaLowAvailabilitySKUs } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
+import { CHART_LIMITS } from "@/lib/metrics";
 
 export default function OnlineAvailability() {
   const { getTimePhrase } = useDateRange();
@@ -22,6 +23,11 @@ export default function OnlineAvailability() {
     if (pct >= 50) return "bg-status-warning/10 border-status-warning/20";
     return "bg-status-error/10 border-status-error/20";
   };
+
+  // Truncate data to chart limits
+  const displayPincodeData = olaPincodeData.slice(0, CHART_LIMITS.maxRows);
+  const displaySkuData = olaSkuPincodeData.slice(0, 5);
+  const displayCriticalSKUs = olaLowAvailabilitySKUs.slice(0, CHART_LIMITS.maxRows);
 
   // Time-aware decision summaries
   const decisionSummaries = [
