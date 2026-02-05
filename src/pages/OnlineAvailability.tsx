@@ -64,8 +64,8 @@
                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Must-Have</span>
                  </div>
                  <p className="text-2xl font-semibold text-foreground">{olaKPIs.mustHaveAvailability.value}%</p>
-                 <span className={`text-xs ${olaKPIs.mustHaveAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                   {olaKPIs.mustHaveAvailability.trend.direction === "up" ? "+" : "-"}{olaKPIs.mustHaveAvailability.trend.value}%
+                   <span className="text-xs text-status-error">
+                     {olaKPIs.mustHaveAvailability.trend.value}%
                  </span>
                </div>
                
