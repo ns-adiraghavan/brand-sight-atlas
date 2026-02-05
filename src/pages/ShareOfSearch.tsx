@@ -126,7 +126,7 @@ export default function ShareOfSearch() {
 
         {/* LEVEL 2.5: Breakdown - Rank Distribution + Visibility by Result Type */}
         <div className="grid grid-cols-2 gap-6">
-          {/* Rank Distribution */}
+          {/* Rank Distribution - limited to maxBars */}
           <div className="bg-card rounded-xl border border-border p-6">
             <div className="mb-5">
               <h3 className="text-base font-semibold text-foreground">Rank Distribution</h3>
@@ -134,7 +134,7 @@ export default function ShareOfSearch() {
             </div>
           
             <div className="space-y-3">
-              {sosRankDistribution.map((bucket) => (
+              {displayRankDistribution.map((bucket) => (
                 <div key={bucket.bucket} className="flex items-center gap-4">
                   <span className="text-sm font-medium text-foreground w-20">{bucket.bucket}</span>
                   <div className="flex-1 h-8 bg-muted/30 rounded overflow-hidden relative">
@@ -165,7 +165,7 @@ export default function ShareOfSearch() {
             </div>
             
             <div className="space-y-4">
-              {sosVisibilityByType.map((item) => (
+              {sosVisibilityByType.slice(0, 3).map((item) => (
                 <div key={item.type} className="bg-muted/30 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -190,7 +190,7 @@ export default function ShareOfSearch() {
           </div>
         </div>
 
-        {/* LEVEL 2.5: Keyword Rank Tracking Table */}
+        {/* LEVEL 2.5: Keyword Rank Tracking Table - limited to maxRows */}
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="mb-5">
             <h3 className="text-base font-semibold text-foreground">Keyword Rankings</h3>
@@ -209,7 +209,7 @@ export default function ShareOfSearch() {
                 </tr>
               </thead>
               <tbody>
-                {sosKeywordRankings.slice(0, 8).map((item, idx) => (
+                {displayKeywords.map((item, idx) => (
                   <tr key={idx} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
                     <td className="py-3 px-2">
                       <span className="text-sm font-medium text-foreground">{item.keyword}</span>
@@ -232,7 +232,11 @@ export default function ShareOfSearch() {
                 ))}
               </tbody>
             </table>
-            <button className="mt-4 text-sm text-primary hover:underline">View all {sosKPIs.keywordsTracked.value} keywords →</button>
+            {sosKeywordRankings.length > CHART_LIMITS.maxRows && (
+              <p className="mt-4 text-sm text-muted-foreground">
+                Showing {CHART_LIMITS.maxRows} of {sosKeywordRankings.length} keywords
+              </p>
+            )}
           </div>
         </div>
 
@@ -251,17 +255,17 @@ export default function ShareOfSearch() {
             ))}
           </div>
           
-          {/* Rankings - Side by side */}
+          {/* Rankings - Side by side, limited to 5 items each */}
           <div className="col-span-2 grid grid-cols-2 gap-4">
             <RankedList
               title="Best Positions"
               subtitle="Highest ranking keywords"
-              items={sosTopPerformers.slice(0, 4)}
+              items={displayTopPerformers}
             />
             <RankedList
               title="Needs Attention"
               subtitle="Lowest ranking keywords"
-              items={sosBottomPerformers.slice(0, 4)}
+              items={displayBottomPerformers}
             />
           </div>
         </div>
