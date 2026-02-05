@@ -92,56 +92,48 @@ export default function OnlineAvailability() {
             </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-6">
-            {/* Primary Metric */}
-            <div className="col-span-1 text-center border-r border-border pr-6">
+          {/* Fixed derived metrics: Overall Availability %, SKUs at Risk, Pincodes Affected, Top Pack Availability % */}
+          <div className="grid grid-cols-4 gap-6">
+            {/* Primary Metric: Overall Availability % */}
+            <div className="text-center border-r border-border pr-6">
               <p className="text-5xl font-bold text-foreground">{olaKPIs.overallAvailability.value}%</p>
-              <p className="text-sm text-muted-foreground mt-1">Overall Availability</p>
+              <p className="text-sm text-muted-foreground mt-1">Overall Availability %</p>
               <div className={`inline-flex items-center gap-1 mt-2 text-sm font-medium ${olaKPIs.overallAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
                 {olaKPIs.overallAvailability.trend.direction === "up" ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                 {olaKPIs.overallAvailability.trend.value}% WoW
               </div>
             </div>
             
-            {/* Secondary Metrics */}
-            <div className="col-span-4 grid grid-cols-4 gap-4">
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Pincodes</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.totalPincodes.value}</p>
-                <span className="text-xs text-status-success">+{olaKPIs.totalPincodes.trend.value} new</span>
+            {/* SKUs at Risk */}
+            <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="w-4 h-4 text-status-warning" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">SKUs at Risk</span>
               </div>
-              
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Must-Have</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.mustHaveAvailability.value}%</p>
-                <span className="text-xs text-status-error">{olaKPIs.mustHaveAvailability.trend.value}%</span>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.skusAtRisk.value}</p>
+              <span className="text-xs text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
+            </div>
+            
+            {/* Pincodes Affected */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <MapPin className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Pincodes Affected</span>
               </div>
-              
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">New Launches</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.newLaunchAvailability.value}%</p>
-                <span className={`text-xs ${olaKPIs.newLaunchAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                  {olaKPIs.newLaunchAvailability.trend.direction === "up" ? "+" : "-"}{olaKPIs.newLaunchAvailability.trend.value}%
-                </span>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.totalPincodes.value}</p>
+              <span className="text-xs text-status-success">+{olaKPIs.totalPincodes.trend.value} tracked</span>
+            </div>
+            
+            {/* Top Pack Availability % */}
+            <div className="flex flex-col justify-center">
+              <div className="flex items-center gap-2 mb-1">
+                <Star className="w-4 h-4 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground uppercase tracking-wide">Top Pack Avail %</span>
               </div>
-              
-              <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3 -m-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-status-warning" />
-                  <span className="text-xs text-muted-foreground uppercase tracking-wide">At Risk</span>
-                </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.skusAtRisk.value}</p>
-                <span className="text-xs text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
-              </div>
+              <p className="text-2xl font-semibold text-foreground">{olaKPIs.topPacksAvailability.value}%</p>
+              <span className={`text-xs ${olaKPIs.topPacksAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
+                {olaKPIs.topPacksAvailability.trend.direction === "up" ? "+" : ""}{olaKPIs.topPacksAvailability.trend.value}%
+              </span>
             </div>
           </div>
         </div>
