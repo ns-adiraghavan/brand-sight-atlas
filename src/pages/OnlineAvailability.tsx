@@ -149,7 +149,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="grid grid-cols-2 gap-3">
-            {olaPincodeData.map((item) => (
+            {displayPincodeData.map((item) => (
               <div 
                 key={item.pincode}
                 className={cn(
@@ -171,6 +171,12 @@ export default function OnlineAvailability() {
               </div>
             ))}
           </div>
+          
+          {olaPincodeData.length > CHART_LIMITS.maxRows && (
+            <p className="text-xs text-muted-foreground mt-3">
+              Showing {CHART_LIMITS.maxRows} of {olaPincodeData.length} pincodes
+            </p>
+          )}
           
           {/* Legend */}
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-border">
