@@ -116,7 +116,10 @@ export default function ShareOfSearch() {
           </div>
         </div>
 
-        {/* LEVEL 2: Breakdown - Rank Distribution + Visibility by Result Type */}
+        {/* LEVEL 2: Primary Temporal Visual */}
+        <SearchVisibilityTrendChart />
+
+        {/* LEVEL 2.5: Breakdown - Rank Distribution + Visibility by Result Type */}
         <div className="grid grid-cols-2 gap-6">
           {/* Rank Distribution */}
           <div className="bg-card rounded-xl border border-border p-6">
