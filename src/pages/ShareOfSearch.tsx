@@ -1,8 +1,10 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InlineInsight } from "@/components/dashboard/InlineInsight";
 import { RankedList } from "@/components/dashboard/RankedList";
+import { SearchVisibilityTrendChart } from "@/components/dashboard/SearchVisibilityTrendChart";
 import { Search, TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react";
-import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers, sosInsights } from "@/data/mockData";
+import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers } from "@/data/mockData";
+import { useDateRange } from "@/contexts/DateRangeContext";
 
 const getRankColor = (rank: number) => {
   if (rank <= 3) return "text-status-success";
@@ -25,6 +27,30 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
 };
 
 export default function ShareOfSearch() {
+  const { getTimePhrase } = useDateRange();
+
+  // Time-aware insights
+  const sosInsights = [
+    {
+      id: "1",
+      type: "alert" as const,
+      title: "Rank drop: Instant Noodles keywords",
+      description: `3 keywords dropped below position 20 ${getTimePhrase()}.`,
+    },
+    {
+      id: "2",
+      type: "warning" as const,
+      title: "Declining visibility in Sponsored",
+      description: `12 keywords lost sponsored placement ${getTimePhrase()}. Review bid strategy.`,
+    },
+    {
+      id: "3",
+      type: "info" as const,
+      title: "Strong organic performance",
+      description: `5 new keywords entered top 3 organic positions ${getTimePhrase()}.`,
+    },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -90,7 +116,10 @@ export default function ShareOfSearch() {
           </div>
         </div>
 
-        {/* LEVEL 2: Breakdown - Rank Distribution + Visibility by Result Type */}
+        {/* LEVEL 2: Primary Temporal Visual */}
+        <SearchVisibilityTrendChart />
+
+        {/* LEVEL 2.5: Breakdown - Rank Distribution + Visibility by Result Type */}
         <div className="grid grid-cols-2 gap-6">
           {/* Rank Distribution */}
           <div className="bg-card rounded-xl border border-border p-6">
