@@ -19,9 +19,34 @@
      return "bg-status-error/10 border-status-error/20";
    };
  
-   return (
-     <DashboardLayout>
-       <div className="space-y-6">
+  // Generate decision summaries based on current data
+  const decisionSummaries = [
+    olaKPIs.skusAtRisk.value > 5 
+      ? `Address ${olaKPIs.skusAtRisk.value} at-risk SKUs immediately—potential revenue loss in key pincodes`
+      : `SKU availability is stable with only ${olaKPIs.skusAtRisk.value} items requiring attention`,
+    olaKPIs.mustHaveAvailability.value < 90
+      ? `Escalate must-have SKU gaps: ${100 - olaKPIs.mustHaveAvailability.value}% unavailability impacts core assortment`
+      : `Must-have coverage at ${olaKPIs.mustHaveAvailability.value}%—maintain current replenishment cadence`,
+    olaKPIs.newLaunchAvailability.value < 80
+      ? `Prioritize new launch distribution: ${olaKPIs.newLaunchAvailability.value}% availability limits market penetration`
+      : `New launches performing well at ${olaKPIs.newLaunchAvailability.value}% availability across pincodes`,
+  ];
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Decision Summary */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Decision Summary</h2>
+          <ul className="space-y-2">
+            {decisionSummaries.map((summary, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                <span className="text-sm text-foreground leading-relaxed">{summary}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
          {/* LEVEL 1: Summary - Single glanceable row */}
          <div className="bg-card rounded-xl border border-border p-6">
            <div className="flex items-center gap-3 mb-6">
