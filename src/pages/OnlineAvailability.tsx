@@ -215,7 +215,7 @@ export default function OnlineAvailability() {
           </div>
           
           <div className="space-y-3">
-            {olaSkuPincodeData.map((sku) => (
+            {displaySkuData.map((sku) => (
               <div key={sku.id} className="border border-border rounded-lg p-4">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -226,9 +226,6 @@ export default function OnlineAvailability() {
                       )}
                       {sku.topPack && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium bg-status-info/10 text-status-info rounded">Top Pack</span>
-                      )}
-                      {sku.newLaunch && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium bg-status-warning/10 text-status-warning rounded">New</span>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">EAN: {sku.ean} • {sku.salesCategory}</p>
@@ -259,10 +256,7 @@ export default function OnlineAvailability() {
                         <p className="text-muted-foreground">{pa.merchant}</p>
                       </div>
                       {pa.available ? (
-                        <div className="text-right">
-                          <Check className="w-4 h-4 text-status-success" />
-                          {pa.salePrice && <p className="text-status-success">₹{pa.salePrice}</p>}
-                        </div>
+                        <Check className="w-4 h-4 text-status-success" />
                       ) : (
                         <X className="w-4 h-4 text-status-error" />
                       )}
