@@ -2,10 +2,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InlineInsight } from "@/components/dashboard/InlineInsight";
 import { RankedList } from "@/components/dashboard/RankedList";
 import { SearchVisibilityTrendChart } from "@/components/dashboard/SearchVisibilityTrendChart";
+import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataStatusIndicator";
 import { Search, TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { sosKPIs, sosRankDistribution, sosVisibilityByType, sosKeywordRankings, sosTopPerformers, sosBottomPerformers } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { CHART_LIMITS } from "@/lib/metrics";
+import { generateSoSInsights, generateDecisionSummary } from "@/lib/insights";
 
 const getRankColor = (rank: number) => {
   if (rank <= 3) return "text-status-success";
@@ -28,7 +30,8 @@ const TrendIcon = ({ trend }: { trend: "up" | "down" | "stable" }) => {
 };
 
 export default function ShareOfSearch() {
-  const { getTimePhrase } = useDateRange();
+  const { preset, getTimePhrase } = useDateRange();
+  const dataStatus = useDataStatus(preset);
 
   // Truncate data to chart limits
   const displayRankDistribution = sosRankDistribution.slice(0, CHART_LIMITS.maxBars);
@@ -36,31 +39,59 @@ export default function ShareOfSearch() {
   const displayTopPerformers = sosTopPerformers.slice(0, 5);
   const displayBottomPerformers = sosBottomPerformers.slice(0, 5);
 
-  // Time-aware insights
-  const sosInsights = [
-    {
-      id: "1",
-      type: "alert" as const,
-      title: "Rank drop: Instant Noodles keywords",
-      description: `3 keywords dropped below position 20 ${getTimePhrase()}.`,
-    },
-    {
-      id: "2",
-      type: "warning" as const,
-      title: "Declining visibility in Sponsored",
-      description: `12 keywords lost sponsored placement ${getTimePhrase()}. Review bid strategy.`,
-    },
-    {
-      id: "3",
-      type: "info" as const,
-      title: "Strong organic performance",
-      description: `5 new keywords entered top 3 organic positions ${getTimePhrase()}.`,
-    },
+  // Calculate SoS metrics
+  const sosPresencePct = Math.round((sosKPIs.keywordsInTop10.value + (sosKPIs.keywordsTracked.value - sosKPIs.keywordsInTop10.value - sosKPIs.keywordsBelowTop20.value)) / sosKPIs.keywordsTracked.value * 100);
+  const page1PresencePct = Math.round(sosKPIs.keywordsInTop10.value / sosKPIs.keywordsTracked.value * 100);
+
+  // Generate time-aware decision summaries with probabilistic language
+  const rawDecisionSummaries = [
+    sosKPIs.keywordsBelowTop20.value > 5
+      ? `Prioritize SEO efforts: ${sosKPIs.keywordsBelowTop20.value} keywords below top 20 ${getTimePhrase()} limit organic visibility`
+      : `Search positions stable ${getTimePhrase()} with most keywords maintaining top 20 presence`,
+    page1PresencePct < 50
+      ? `Page 1 presence at ${page1PresencePct}% ${getTimePhrase()}—consider sponsored placement to bridge visibility gap`
+      : `Page 1 presence strong at ${page1PresencePct}% ${getTimePhrase()}—maintain current optimization strategy`,
+    sosKPIs.avgSearchRank.value > 10
+      ? `Average rank at #${sosKPIs.avgSearchRank.value} ${getTimePhrase()}—focused improvement on high-intent keywords recommended`
+      : `Strong average position at #${sosKPIs.avgSearchRank.value} ${getTimePhrase()}—competitive positioning maintained`,
   ];
+
+  const decisionSummaries = generateDecisionSummary(rawDecisionSummaries, dataStatus.coverage);
+
+  // Generate time-aware, probabilistic insights
+  const sosInsights = generateSoSInsights(
+    {
+      avgRank: sosKPIs.avgSearchRank.value,
+      page1Presence: page1PresencePct,
+      sosPresence: sosPresencePct,
+      rankChange: sosKPIs.avgSearchRank.trend.direction === "up" 
+        ? -sosKPIs.avgSearchRank.trend.value  // "up" for rank means improving (going lower)
+        : sosKPIs.avgSearchRank.trend.value,
+      keywordsBelowTop20: sosKPIs.keywordsBelowTop20.value,
+    },
+    getTimePhrase(),
+    dataStatus.coverage
+  );
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Data Status Indicator */}
+        <DataStatusIndicator status={dataStatus} />
+
+        {/* Decision Summary */}
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+          <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Decision Summary</h2>
+          <ul className="space-y-2">
+            {decisionSummaries.map((summary, index) => (
+              <li key={index} className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
+                <span className="text-sm text-foreground leading-relaxed">{summary}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         {/* LEVEL 1: Summary - Rank performance at a glance */}
         <div className="bg-card rounded-xl border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
@@ -91,9 +122,7 @@ export default function ShareOfSearch() {
                 <Eye className="w-4 h-4 text-muted-foreground" />
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">SoS Presence %</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">
-                {Math.round((sosKPIs.keywordsInTop10.value + (sosKPIs.keywordsTracked.value - sosKPIs.keywordsInTop10.value - sosKPIs.keywordsBelowTop20.value)) / sosKPIs.keywordsTracked.value * 100)}%
-              </p>
+              <p className="text-2xl font-semibold text-foreground">{sosPresencePct}%</p>
               <span className="text-xs text-muted-foreground">rank ≤ 25</span>
             </div>
             
@@ -103,9 +132,7 @@ export default function ShareOfSearch() {
                 <BarChart3 className="w-4 h-4 text-status-success" />
                 <span className="text-xs text-muted-foreground uppercase tracking-wide">Page 1 Presence %</span>
               </div>
-              <p className="text-2xl font-semibold text-foreground">
-                {Math.round(sosKPIs.keywordsInTop10.value / sosKPIs.keywordsTracked.value * 100)}%
-              </p>
+              <p className="text-2xl font-semibold text-foreground">{page1PresencePct}%</p>
               <span className="text-xs text-muted-foreground">rank ≤ 10</span>
             </div>
             

@@ -65,7 +65,8 @@ export function SearchVisibilityTrendChart() {
   const isPositive = trendChange !== null && Number(trendChange) >= 0;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 relative">
+      <IllustrativeLabel variant="corner" />
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-base font-semibold text-foreground">Search Visibility Over Time</h3>
