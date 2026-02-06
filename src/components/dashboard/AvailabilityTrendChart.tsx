@@ -69,7 +69,8 @@ export function AvailabilityTrendChart() {
   ].slice(0, CHART_LIMITS.maxLines);
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 relative">
+      <IllustrativeLabel variant="corner" />
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-base font-semibold text-foreground">Availability Trend</h3>
