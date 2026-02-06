@@ -1,14 +1,17 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { InlineInsight } from "@/components/dashboard/InlineInsight";
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
+import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataStatusIndicator";
 import { Package, TrendingUp, TrendingDown, AlertTriangle, Star, MapPin, Check, X } from "lucide-react";
 import { olaKPIs, olaPincodeData, olaSkuPincodeData, olaLowAvailabilitySKUs } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
 import { CHART_LIMITS } from "@/lib/metrics";
+import { generateOLAInsights, generateDecisionSummary } from "@/lib/insights";
 
 export default function OnlineAvailability() {
-  const { getTimePhrase } = useDateRange();
+  const { preset, getTimePhrase } = useDateRange();
+  const dataStatus = useDataStatus(preset);
   
   const getAvailabilityColor = (pct: number) => {
     if (pct >= 90) return "bg-status-success";
@@ -29,8 +32,8 @@ export default function OnlineAvailability() {
   const displaySkuData = olaSkuPincodeData.slice(0, 5);
   const displayCriticalSKUs = olaLowAvailabilitySKUs.slice(0, CHART_LIMITS.maxRows);
 
-  // Time-aware decision summaries
-  const decisionSummaries = [
+  // Generate time-aware decision summaries with probabilistic language
+  const rawDecisionSummaries = [
     olaKPIs.skusAtRisk.value > 5 
       ? `Address ${olaKPIs.skusAtRisk.value} at-risk SKUs ${getTimePhrase()}—potential revenue loss in key pincodes`
       : `SKU availability stable ${getTimePhrase()} with only ${olaKPIs.skusAtRisk.value} items requiring attention`,
@@ -42,31 +45,29 @@ export default function OnlineAvailability() {
       : `New launches performing well at ${olaKPIs.newLaunchAvailability.value}% availability ${getTimePhrase()}`,
   ];
 
-  // Time-aware insights
-  const olaInsights = [
+  const decisionSummaries = generateDecisionSummary(rawDecisionSummaries, dataStatus.coverage);
+
+  // Generate time-aware, probabilistic insights
+  const olaInsights = generateOLAInsights(
     {
-      id: "1",
-      type: "alert" as const,
-      title: "Critical stockout: Dove Body Wash",
-      description: `Availability dropped below 25% across 3 merchants ${getTimePhrase()}.`,
+      skusAtRisk: olaKPIs.skusAtRisk.value,
+      overallAvailability: olaKPIs.overallAvailability.value,
+      mustHaveAvailability: olaKPIs.mustHaveAvailability.value,
+      topPacksAvailability: olaKPIs.topPacksAvailability.value,
+      weeklyChange: olaKPIs.overallAvailability.trend.direction === "up" 
+        ? olaKPIs.overallAvailability.trend.value 
+        : -olaKPIs.overallAvailability.trend.value,
     },
-    {
-      id: "2",
-      type: "warning" as const,
-      title: "Must-Have SKUs declining",
-      description: `Must-Have availability down 0.8% week-over-week. 12 SKUs below threshold ${getTimePhrase()}.`,
-    },
-    {
-      id: "3",
-      type: "info" as const,
-      title: "New Launch performance",
-      description: `New launches showing strong availability growth at +5.3% ${getTimePhrase()}.`,
-    },
-  ];
+    getTimePhrase(),
+    dataStatus.coverage
+  );
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Data Status Indicator */}
+        <DataStatusIndicator status={dataStatus} />
+
         {/* Decision Summary */}
         <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
           <h2 className="text-sm font-semibold text-primary uppercase tracking-wide mb-3">Decision Summary</h2>

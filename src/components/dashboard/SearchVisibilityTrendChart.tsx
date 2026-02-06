@@ -2,6 +2,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { TrendingUp, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import { CHART_LIMITS, hasValidData, PLACEHOLDER_MESSAGES } from "@/lib/metrics";
+import { IllustrativeLabel } from "./IllustrativeLabel";
 
 // Generate mock temporal data based on date range
 // Grain: Keyword × Rank × Day, aggregated weekly
@@ -64,7 +65,8 @@ export function SearchVisibilityTrendChart() {
   const isPositive = trendChange !== null && Number(trendChange) >= 0;
 
   return (
-    <div className="bg-card rounded-xl border border-border p-6">
+    <div className="bg-card rounded-xl border border-border p-6 relative">
+      <IllustrativeLabel variant="corner" />
       <div className="flex items-start justify-between mb-5">
         <div>
           <h3 className="text-base font-semibold text-foreground">Search Visibility Over Time</h3>
