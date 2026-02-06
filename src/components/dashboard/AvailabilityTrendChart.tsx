@@ -2,6 +2,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { TrendingUp, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import { CHART_LIMITS, hasValidData, PLACEHOLDER_MESSAGES } from "@/lib/metrics";
+import { IllustrativeLabel } from "./IllustrativeLabel";
 
 // Generate mock temporal data based on date range
 // Grain: SKU × Pincode × Day, aggregated weekly
