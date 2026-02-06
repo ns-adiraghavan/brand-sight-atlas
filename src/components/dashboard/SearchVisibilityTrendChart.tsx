@@ -2,6 +2,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { TrendingUp, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import { CHART_LIMITS, hasValidData, PLACEHOLDER_MESSAGES } from "@/lib/metrics";
+import { IllustrativeLabel } from "./IllustrativeLabel";
 
 // Generate mock temporal data based on date range
 // Grain: Keyword × Rank × Day, aggregated weekly
