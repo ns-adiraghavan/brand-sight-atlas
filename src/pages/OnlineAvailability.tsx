@@ -28,7 +28,7 @@ export default function OnlineAvailability() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>
@@ -110,16 +110,17 @@ export default function OnlineAvailability() {
             subtitle="Pincode volatility, SKU risk, and availability distribution"
           />
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Pincode volatility scatter */}
-            <PincodeVolatilityScatter />
-
-            {/* Availability distribution bands */}
-            <AvailabilityDistribution />
+          <div className="grid grid-cols-5 gap-4">
+            <div className="col-span-3">
+              <PincodeVolatilityScatter />
+            </div>
+            <div className="col-span-2">
+              <AvailabilityDistribution />
+            </div>
           </div>
 
           {/* Bottom SKUs table */}
-          <div className="mt-4">
+          <div className="mt-3">
             <BottomSKUsTable />
           </div>
         </section>
