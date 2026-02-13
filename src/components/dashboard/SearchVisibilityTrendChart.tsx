@@ -136,37 +136,40 @@ export function SearchVisibilityTrendChart() {
                   }}
                 />
                 <Legend 
-                  wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }}
+                  wrapperStyle={{ fontSize: "11px", paddingTop: "12px" }}
+                  iconType="plainline"
                 />
-                {/* Limited to CHART_LIMITS.maxLines (3): 2 areas + 1 line */}
+                {/* Primary: Top10 Presence (bold, filled) */}
+                <Area 
+                  yAxisId="left"
+                  type="monotone" 
+                  dataKey="page1Pct" 
+                  name="Top 10 Presence %" 
+                  fill="hsl(var(--chart-1) / 0.2)" 
+                  stroke="hsl(var(--chart-1))"
+                  strokeWidth={2.5}
+                  connectNulls={false}
+                />
+                {/* Secondary: Elite share (lighter, no fill) */}
                 <Area 
                   yAxisId="left"
                   type="monotone" 
                   dataKey="presencePct" 
                   name="SoS Presence %" 
-                  fill="hsl(var(--primary) / 0.15)" 
-                  stroke="hsl(var(--primary) / 0.4)"
-                  strokeWidth={1}
+                  fill="hsl(var(--chart-2) / 0.08)" 
+                  stroke="hsl(var(--chart-2) / 0.6)"
+                  strokeWidth={1.5}
                   connectNulls={false}
                 />
-                <Area 
-                  yAxisId="left"
-                  type="monotone" 
-                  dataKey="page1Pct" 
-                  name="Page 1 Presence %" 
-                  fill="hsl(var(--primary) / 0.3)" 
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={2}
-                  connectNulls={false}
-                />
+                {/* Tertiary: Avg Rank — thin dashed, low prominence */}
                 <Line 
                   yAxisId="right"
                   type="monotone" 
                   dataKey="avgRank" 
                   name="Avg Rank" 
-                  stroke="hsl(var(--status-warning))" 
-                  strokeWidth={2}
-                  strokeDasharray="4 4"
+                  stroke="hsl(var(--muted-foreground) / 0.5)" 
+                  strokeWidth={1}
+                  strokeDasharray="4 3"
                   dot={false}
                   connectNulls={false}
                 />
