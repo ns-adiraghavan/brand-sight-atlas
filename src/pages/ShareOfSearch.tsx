@@ -69,23 +69,23 @@ export default function ShareOfSearch() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-5">
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>
           <SectionHeader
             title="Executive Snapshot"
-            subtitle="Search rank performance at a glance"
+            subtitle="Key visibility metrics at a glance"
             action={<DataStatusIndicator status={dataStatus} />}
           />
 
           {/* Insight paragraph */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-5">
+          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
             <p className="text-sm text-foreground leading-relaxed">{execInsight}</p>
           </div>
 
           {/* KPI row */}
-          <div className="bg-card rounded-xl border border-border p-6">
+          <div className="bg-card rounded-xl border border-border p-5">
             <div className="grid grid-cols-4 gap-6">
               {/* Average Search Rank */}
               <div className="text-center border-r border-border pr-6">
@@ -136,7 +136,7 @@ export default function ShareOfSearch() {
         <section>
           <SectionHeader
             title="Structural Trends"
-            subtitle="Temporal visibility patterns and rank movement"
+            subtitle="Visibility trajectory and positioning shifts"
           />
           <SearchVisibilityTrendChart />
         </section>
@@ -144,15 +144,15 @@ export default function ShareOfSearch() {
         {/* ===== SECTION 3: DIAGNOSTIC DEEP DIVE ===== */}
         <section>
           <SectionHeader
-            title="Diagnostic Deep Dive"
-            subtitle="Rank distribution, keyword volatility, and risk classification"
+            title="Diagnostics"
+            subtitle="Position structure, instability signals, and action priorities"
           />
 
           <div className="grid grid-cols-5 gap-4">
             {/* Rank Distribution — 60% */}
             <div className="col-span-3 bg-card rounded-xl border border-border p-6">
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-foreground">Rank Distribution</h3>
+                <h3 className="text-base font-semibold text-foreground">Position Distribution</h3>
                 <p className="text-sm text-muted-foreground">Keywords grouped by position bucket</p>
               </div>
               <div className="space-y-3">
