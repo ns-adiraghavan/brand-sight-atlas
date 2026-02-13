@@ -227,6 +227,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sos_exclusive_weekly_mat: {
+        Row: {
+          exclusive_share_pct: number | null
+          platform: string | null
+          week: string | null
+        }
+        Insert: {
+          exclusive_share_pct?: number | null
+          platform?: string | null
+          week?: string | null
+        }
+        Update: {
+          exclusive_share_pct?: number | null
+          platform?: string | null
+          week?: string | null
+        }
+        Relationships: []
+      }
+      sos_exec_summary_mat: {
+        Row: {
+          elite_rank_share_pct: number | null
+          exclusive_share_pct: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+        }
+        Insert: {
+          elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Update: {
+          elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Relationships: []
+      }
       sos_fact: {
         Row: {
           asin_code: string | null
@@ -287,6 +326,87 @@ export type Database = {
           search_rank?: number | null
           search_type?: string | null
           seller_name?: string | null
+        }
+        Relationships: []
+      }
+      sos_keyword_risk_mat: {
+        Row: {
+          mean_rank: number | null
+          performance_band: string | null
+          platform: string | null
+          search_keyword: string | null
+        }
+        Insert: {
+          mean_rank?: number | null
+          performance_band?: string | null
+          platform?: string | null
+          search_keyword?: string | null
+        }
+        Update: {
+          mean_rank?: number | null
+          performance_band?: string | null
+          platform?: string | null
+          search_keyword?: string | null
+        }
+        Relationships: []
+      }
+      sos_keyword_volatility_mat: {
+        Row: {
+          mean_rank: number | null
+          platform: string | null
+          rank_volatility: number | null
+          search_keyword: string | null
+        }
+        Insert: {
+          mean_rank?: number | null
+          platform?: string | null
+          rank_volatility?: number | null
+          search_keyword?: string | null
+        }
+        Update: {
+          mean_rank?: number | null
+          platform?: string | null
+          rank_volatility?: number | null
+          search_keyword?: string | null
+        }
+        Relationships: []
+      }
+      sos_rank_distribution_mat: {
+        Row: {
+          listing_count: number | null
+          platform: string | null
+          rank_bucket: string | null
+        }
+        Insert: {
+          listing_count?: number | null
+          platform?: string | null
+          rank_bucket?: string | null
+        }
+        Update: {
+          listing_count?: number | null
+          platform?: string | null
+          rank_bucket?: string | null
+        }
+        Relationships: []
+      }
+      sos_weekly_trend_mat: {
+        Row: {
+          elite_rank_share_pct: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+          week: string | null
+        }
+        Insert: {
+          elite_rank_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+          week?: string | null
+        }
+        Update: {
+          elite_rank_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+          week?: string | null
         }
         Relationships: []
       }
