@@ -179,24 +179,43 @@ export default function ShareOfSearch() {
               </div>
             </div>
 
-            {/* Keyword Volatility Summary — 40% */}
+            {/* Keyword Volatility — 40% (ranked bar: mean rank vs instability) */}
             <div className="col-span-2 bg-card rounded-xl border border-border p-6">
               <div className="mb-4">
-                <h3 className="text-base font-semibold text-foreground">Keyword Volatility</h3>
-                <p className="text-sm text-muted-foreground">Rank movement signals across keywords</p>
+                <h3 className="text-base font-semibold text-foreground">Rank Instability</h3>
+                <p className="text-sm text-muted-foreground">Mean rank vs. movement direction</p>
               </div>
-              <div className="space-y-2">
-                {displayKeywords.slice(0, 7).map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between py-1.5 border-b border-border/50 last:border-0">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <span className={`inline-flex items-center justify-center w-8 h-6 rounded text-xs font-bold ${getRankBg(item.rank)} ${getRankColor(item.rank)}`}>
-                        #{item.rank}
-                      </span>
-                      <span className="text-sm text-foreground truncate">{item.keyword}</span>
+              <div className="space-y-2.5">
+                {displayKeywords.slice(0, 7).map((item, idx) => {
+                  // Simulate volatility bar width from rank (wider = worse rank = more exposed)
+                  const barWidth = Math.min(100, (item.rank / 50) * 100);
+                  const band = getRiskBand(item.rank);
+                  return (
+                    <div key={idx} className="group">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-xs text-foreground truncate max-w-[60%]">{item.keyword}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${getRiskBandStyle(band)}`}>{band}</span>
+                          <TrendIcon trend={item.trend} />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold w-7 ${getRankColor(item.rank)}`}>#{item.rank}</span>
+                        <div className="flex-1 h-4 bg-muted/30 rounded overflow-hidden">
+                          <div
+                            className={`h-full rounded transition-all ${
+                              item.rank <= 3 ? "bg-status-success/50" :
+                              item.rank <= 10 ? "bg-status-info/50" :
+                              item.rank <= 20 ? "bg-status-warning/50" :
+                              "bg-status-error/50"
+                            }`}
+                            style={{ width: `${barWidth}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <TrendIcon trend={item.trend} />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
