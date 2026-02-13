@@ -60,7 +60,7 @@ export default function ShareOfSearch() {
   const page1Gap = page1PresencePct < 60;
 
   const execInsight = applyProbabilisticLanguage(
-    `Search positioning is ${rankDirection} ${getTimePhrase()}, with tail-keyword risk ${tailRisk} across ${sosKPIs.keywordsBelowTop20.value} keywords outside the top 20.${page1Gap ? " Page 1 coverage remains a structural constraint—sustained sponsored investment or SEO optimization is warranted." : ""} Competitive rank defense should focus on high-intent keywords where elite positioning is most contestable.`,
+    `Search visibility is ${rankDirection} ${getTimePhrase()}, though ${page1Gap ? "Page 1 coverage remains a structural ceiling that limits organic conversion potential" : "momentum is unevenly distributed across the keyword portfolio"}. ${tailRisk === "significant" ? "Defensive positioning on high-intent keywords is critical as tail-keyword erosion signals competitive pressure." : "Sustaining elite rank share will require proactive bid and content strategy as competitive intensity builds."}`,
     dataStatus.coverage
   );
 
