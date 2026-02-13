@@ -4,6 +4,7 @@ import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataS
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { TrendingUp, TrendingDown, Hash, Eye, BarChart3, ArrowUp, ArrowDown, Minus, Target } from "lucide-react";
 import { sosKPIs, sosRankDistribution, sosKeywordRankings } from "@/data/mockData";
+import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { CHART_LIMITS } from "@/lib/metrics";
 import { applyProbabilisticLanguage } from "@/lib/insights";
@@ -277,6 +278,17 @@ export default function ShareOfSearch() {
               )}
             </div>
           </div>
+        </section>
+
+        {/* ===== SECTION 4: ALIGNMENT ===== */}
+        <section>
+          <AlignmentInsight
+            data={[
+              { platform: "Amazon", correlation: 0.72, interpretation: "Platforms with higher availability tend to show stronger search visibility—reinforcing the case for stock-first strategies on high-intent keywords." },
+              { platform: "Flipkart", correlation: 0.58, interpretation: "" },
+              { platform: "BigBasket", correlation: -0.12, interpretation: "" },
+            ]}
+          />
         </section>
       </div>
     </DashboardLayout>
