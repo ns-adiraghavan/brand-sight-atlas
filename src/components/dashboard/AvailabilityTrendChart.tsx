@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Line, ComposedChart } from "recharts";
 import { useDateRange } from "@/contexts/DateRangeContext";
-import { Activity, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { IllustrativeLabel } from "./IllustrativeLabel";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -18,10 +18,10 @@ interface ChartPoint {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  dmart: "hsl(var(--primary))",
-  jiomart: "hsl(var(--status-success))",
-  amazon: "hsl(var(--status-info))",
-  flipkart: "hsl(var(--status-warning))",
+  dmart: "hsl(222, 47%, 20%)",
+  jiomart: "hsl(160, 84%, 39%)",
+  amazon: "hsl(210, 100%, 50%)",
+  flipkart: "hsl(38, 92%, 50%)",
 };
 
 export function AvailabilityTrendChart() {
@@ -41,7 +41,6 @@ export function AvailabilityTrendChart() {
           const platformSet = [...new Set(validRows.map((r) => r.platform))];
           setPlatforms(platformSet);
 
-          // Pivot: one row per week with platform columns
           const weekMap = new Map<string, ChartPoint>();
           for (const row of validRows) {
             const weekLabel = new Date(row.week).toLocaleDateString("en-US", { month: "short", day: "numeric" });
@@ -79,19 +78,19 @@ export function AvailabilityTrendChart() {
       ) : hasData ? (
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <ComposedChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
               <XAxis
                 dataKey="week"
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
                 axisLine={{ stroke: "hsl(var(--border))" }}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+                axisLine={false}
                 tickFormatter={(v) => `${v}%`}
               />
               <Tooltip
@@ -100,20 +99,24 @@ export function AvailabilityTrendChart() {
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
                   fontSize: "12px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
                 formatter={(value: number) => [`${value}%`, ""]}
+                cursor={{ stroke: "hsl(var(--foreground) / 0.15)", strokeWidth: 1 }}
               />
-              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "12px" }} />
+              <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "12px" }} iconType="plainline" />
               {platforms.map((p) => (
-                <Line
+                <Area
                   key={p}
                   type="monotone"
                   dataKey={p}
                   name={`${p} (Overall)`}
-                  stroke={PLATFORM_COLORS[p] || "hsl(var(--primary))"}
-                  strokeWidth={2.5}
+                  fill={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  fillOpacity={0.08}
+                  stroke={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  strokeWidth={3}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 5, strokeWidth: 2, fill: "hsl(var(--card))" }}
                   connectNulls={false}
                 />
               ))}
@@ -123,14 +126,15 @@ export function AvailabilityTrendChart() {
                   type="monotone"
                   dataKey={`${p}_mh`}
                   name={`${p} (Must-Have)`}
-                  stroke={PLATFORM_COLORS[p] || "hsl(var(--primary))"}
-                  strokeWidth={1.5}
+                  stroke={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  strokeWidth={1.8}
                   strokeDasharray="5 3"
                   dot={false}
+                  activeDot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--card))" }}
                   connectNulls={false}
                 />
               ))}
-            </LineChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       ) : (
