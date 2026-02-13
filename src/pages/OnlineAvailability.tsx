@@ -1,5 +1,5 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { InlineInsight } from "@/components/dashboard/InlineInsight";
+
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
 import { PincodeVolatilityScatter } from "@/components/dashboard/PincodeVolatilityScatter";
 import { BottomSKUsTable } from "@/components/dashboard/BottomSKUsTable";
@@ -9,30 +9,20 @@ import { SectionHeader } from "@/components/dashboard/SectionHeader";
 import { TrendingUp, TrendingDown, AlertTriangle, Star, MapPin } from "lucide-react";
 import { olaKPIs } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
-import { generateOLAInsights } from "@/lib/insights";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 
 export default function OnlineAvailability() {
   const { preset, getTimePhrase } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
-  const olaInsights = generateOLAInsights(
-    {
-      skusAtRisk: olaKPIs.skusAtRisk.value,
-      overallAvailability: olaKPIs.overallAvailability.value,
-      mustHaveAvailability: olaKPIs.mustHaveAvailability.value,
-      topPacksAvailability: olaKPIs.topPacksAvailability.value,
-      weeklyChange: olaKPIs.overallAvailability.trend.direction === "up"
-        ? olaKPIs.overallAvailability.trend.value
-        : -olaKPIs.overallAvailability.trend.value,
-    },
-    getTimePhrase(),
-    dataStatus.coverage
-  );
 
-  // Executive insight paragraph — synthesizes KPIs into one sentence
+  // Executive insight — strategic, board-level framing
+  const availDirection = olaKPIs.overallAvailability.trend.direction === "up" ? "trending positively" : "under pressure";
+  const mustHaveGap = olaKPIs.mustHaveAvailability.value < 90;
+  const riskConcentration = olaKPIs.skusAtRisk.value > 5 ? "concentrated" : "manageable";
+
   const execInsight = applyProbabilisticLanguage(
-    `Overall availability stands at ${olaKPIs.overallAvailability.value}% ${getTimePhrase()}, with ${olaKPIs.skusAtRisk.value} SKUs at risk across ${olaKPIs.totalPincodes.value} tracked pincodes. Must-Have coverage is at ${olaKPIs.mustHaveAvailability.value}%, ${olaKPIs.mustHaveAvailability.value < 90 ? "below the 90% target—review replenishment cadence" : "meeting the 90% target"}.`,
+    `Availability is ${availDirection} ${getTimePhrase()}, though risk remains ${riskConcentration} across a narrow set of SKUs.${mustHaveGap ? " Must-Have coverage continues to trail the target threshold—a structural gap that warrants replenishment strategy review." : ""} Sustained improvement will depend on pincode-level consistency and tail-SKU stabilization.`,
     dataStatus.coverage
   );
 
@@ -111,19 +101,6 @@ export default function OnlineAvailability() {
           {/* Main trend chart (already has volatility badge + must-have overlay) */}
           <AvailabilityTrendChart />
 
-          {/* Contextual inline insights (only non-duplicative ones) */}
-          {olaInsights.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 mt-4">
-              {olaInsights.map((insight) => (
-                <InlineInsight
-                  key={insight.id}
-                  type={insight.type}
-                  title={insight.title}
-                  description={insight.description}
-                />
-              ))}
-            </div>
-          )}
         </section>
 
         {/* ===== SECTION 3: DIAGNOSTIC DEEP DIVE ===== */}
