@@ -80,7 +80,7 @@ export default function OnlineAvailability() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4">
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>
@@ -179,21 +179,21 @@ export default function OnlineAvailability() {
         {/* ===== SECTION 3: DIAGNOSTIC DEEP DIVE ===== */}
         <section>
           <SectionHeader
-            title="Diagnostic Deep Dive"
-            subtitle="Pincode volatility, SKU risk, and availability distribution"
+            title="Diagnostics"
+            subtitle="Operational Risk Prioritization"
           />
 
-          <div className="grid grid-cols-5 gap-4">
-            <div className="col-span-3">
-              <PincodeVolatilityScatter />
-            </div>
-            <div className="col-span-2">
-              <AvailabilityDistribution />
-            </div>
-          </div>
-
-          <div className="mt-3">
+          <div className="space-y-3">
             <BottomSKUsTable />
+
+            <div className="grid grid-cols-5 gap-3">
+              <div className="col-span-3">
+                <PincodeVolatilityScatter />
+              </div>
+              <div className="col-span-2">
+                <AvailabilityDistribution />
+              </div>
+            </div>
           </div>
         </section>
 

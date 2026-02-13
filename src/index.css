@@ -112,7 +112,7 @@
     @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
   }
   .status-critical {
-    @apply bg-status-danger-bg text-status-danger;
+    @apply bg-status-danger text-white font-semibold;
   }
   .status-high {
     @apply bg-status-warning-bg text-status-warning;
