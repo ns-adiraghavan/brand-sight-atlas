@@ -1,29 +1,66 @@
+import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
 import { PincodeVolatilityScatter } from "@/components/dashboard/PincodeVolatilityScatter";
 import { BottomSKUsTable } from "@/components/dashboard/BottomSKUsTable";
 import { AvailabilityDistribution } from "@/components/dashboard/AvailabilityDistribution";
 import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataStatusIndicator";
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
-import { TrendingUp, TrendingDown, AlertTriangle, Star, MapPin } from "lucide-react";
-import { olaKPIs } from "@/data/mockData";
+import { TrendingUp, TrendingDown, AlertTriangle, Shield } from "lucide-react";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
+import { supabase } from "@/integrations/supabase/client";
+
+interface ExecSummary {
+  platform: string;
+  availability_pct: number;
+  must_have_availability_pct: number;
+  sku_reliability_pct: number;
+}
 
 export default function OnlineAvailability() {
   const { preset, getTimePhrase } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
+  const [execData, setExecData] = useState<ExecSummary[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Executive insight — strategic, board-level framing
-  const availDirection = olaKPIs.overallAvailability.trend.direction === "up" ? "trending positively" : "under pressure";
-  const mustHaveGap = olaKPIs.mustHaveAvailability.value < 90;
-  const riskConcentration = olaKPIs.skusAtRisk.value > 5 ? "concentrated" : "manageable";
+  useEffect(() => {
+    supabase
+      .from("ola_exec_summary")
+      .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
+      .then(({ data: rows }) => {
+        if (rows) {
+          setExecData(
+            rows.filter(
+              (r) => r.platform && r.availability_pct != null
+            ) as ExecSummary[]
+          );
+        }
+        setLoading(false);
+      });
+  }, []);
+
+  // Aggregate across platforms
+  const avgAvailability =
+    execData.length > 0
+      ? execData.reduce((s, d) => s + (d.availability_pct ?? 0), 0) / execData.length
+      : null;
+  const avgMustHave =
+    execData.length > 0
+      ? execData.reduce((s, d) => s + (d.must_have_availability_pct ?? 0), 0) / execData.length
+      : null;
+  const avgReliability =
+    execData.length > 0
+      ? execData.reduce((s, d) => s + (d.sku_reliability_pct ?? 0), 0) / execData.length
+      : null;
+
+  const availDirection = avgAvailability && avgAvailability > 0.8 ? "trending positively" : "under pressure";
+  const mustHaveGap = avgMustHave != null && avgMustHave < 0.9;
 
   const execInsight = applyProbabilisticLanguage(
-    `Availability is ${availDirection} ${getTimePhrase()}, though risk remains ${riskConcentration} across a narrow set of SKUs.${mustHaveGap ? " Must-Have coverage continues to trail the target threshold—a structural gap that warrants replenishment strategy review." : ""} Sustained improvement will depend on pincode-level consistency and tail-SKU stabilization.`,
+    `Availability is ${availDirection} ${getTimePhrase()}.${mustHaveGap ? " Must-Have coverage continues to trail the target threshold—a structural gap that warrants replenishment strategy review." : ""} Sustained improvement will depend on pincode-level consistency and tail-SKU stabilization.`,
     dataStatus.coverage
   );
 
@@ -44,51 +81,58 @@ export default function OnlineAvailability() {
             <p className="text-sm text-foreground leading-relaxed">{execInsight}</p>
           </div>
 
-          {/* KPI row */}
+          {/* KPI row from ola_exec_summary */}
           <div className="bg-card rounded-xl border border-border p-6">
-            <div className="grid grid-cols-4 gap-6">
-              {/* Overall Availability % */}
-              <div className="text-center border-r border-border pr-6">
-                <p className="text-4xl font-bold text-foreground">{olaKPIs.overallAvailability.value}%</p>
-                <p className="text-xs text-muted-foreground mt-1">Overall Availability</p>
-                <div className={`inline-flex items-center gap-1 mt-2 text-xs font-medium ${olaKPIs.overallAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                  {olaKPIs.overallAvailability.trend.direction === "up" ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
-                  {olaKPIs.overallAvailability.trend.value}% WoW
+            {loading ? (
+              <p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
+            ) : (
+              <div className="grid grid-cols-4 gap-6">
+                {/* Overall Availability % (avg across platforms) */}
+                <div className="text-center border-r border-border pr-6">
+                  <p className="text-4xl font-bold text-foreground">
+                    {avgAvailability != null ? `${(avgAvailability * 100).toFixed(1)}%` : "—"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">Overall Availability</p>
                 </div>
-              </div>
 
-              {/* SKUs at Risk */}
-              <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-status-warning" />
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">SKUs at Risk</span>
+                {/* Must-Have Availability */}
+                <div className="flex flex-col justify-center bg-status-warning/5 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-4 h-4 text-status-warning" />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Must-Have Avail</span>
+                  </div>
+                  <p className="text-2xl font-semibold text-foreground">
+                    {avgMustHave != null ? `${(avgMustHave * 100).toFixed(1)}%` : "—"}
+                  </p>
                 </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.skusAtRisk.value}</p>
-                <span className="text-[10px] text-status-success">↓ {olaKPIs.skusAtRisk.trend.value} vs last week</span>
-              </div>
 
-              {/* Pincodes Affected */}
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Pincodes Tracked</span>
+                {/* SKU Reliability */}
+                <div className="flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wide">SKU Reliability</span>
+                  </div>
+                  <p className="text-2xl font-semibold text-foreground">
+                    {avgReliability != null ? `${(avgReliability * 100).toFixed(1)}%` : "—"}
+                  </p>
                 </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.totalPincodes.value}</p>
-                <span className="text-[10px] text-status-success">+{olaKPIs.totalPincodes.trend.value} new</span>
-              </div>
 
-              {/* Top Pack Availability % */}
-              <div className="flex flex-col justify-center">
-                <div className="flex items-center gap-2 mb-1">
-                  <Star className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Top Pack Avail</span>
+                {/* Per-platform breakdown */}
+                <div className="flex flex-col justify-center">
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">By Platform</span>
+                  <div className="space-y-1.5">
+                    {execData.map((p) => (
+                      <div key={p.platform} className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground capitalize">{p.platform}</span>
+                        <span className="font-medium text-foreground">
+                          {(p.availability_pct * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <p className="text-2xl font-semibold text-foreground">{olaKPIs.topPacksAvailability.value}%</p>
-                <span className={`text-[10px] ${olaKPIs.topPacksAvailability.trend.direction === "up" ? "text-status-success" : "text-status-error"}`}>
-                  {olaKPIs.topPacksAvailability.trend.direction === "up" ? "+" : ""}{olaKPIs.topPacksAvailability.trend.value}%
-                </span>
               </div>
-            </div>
+            )}
           </div>
         </section>
 
@@ -98,10 +142,7 @@ export default function OnlineAvailability() {
             title="Structural Trends"
             subtitle="Temporal patterns and platform comparison"
           />
-
-          {/* Main trend chart (already has volatility badge + must-have overlay) */}
           <AvailabilityTrendChart />
-
         </section>
 
         {/* ===== SECTION 3: DIAGNOSTIC DEEP DIVE ===== */}
@@ -120,7 +161,6 @@ export default function OnlineAvailability() {
             </div>
           </div>
 
-          {/* Bottom SKUs table */}
           <div className="mt-3">
             <BottomSKUsTable />
           </div>
