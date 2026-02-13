@@ -18,10 +18,10 @@ interface ChartPoint {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  dmart: "hsl(var(--chart-1))",
-  jiomart: "hsl(var(--chart-2))",
-  amazon: "hsl(var(--chart-3))",
-  flipkart: "hsl(var(--chart-4))",
+  dmart: "hsl(222, 47%, 20%)",
+  jiomart: "hsl(160, 84%, 39%)",
+  amazon: "hsl(210, 100%, 50%)",
+  flipkart: "hsl(38, 92%, 50%)",
 };
 
 export function SearchVisibilityTrendChart() {
@@ -77,18 +77,18 @@ export function SearchVisibilityTrendChart() {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
               <XAxis
                 dataKey="week"
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
                 axisLine={{ stroke: "hsl(var(--border))" }}
               />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))", fontWeight: 500 }}
                 tickLine={false}
-                axisLine={{ stroke: "hsl(var(--border))" }}
+                axisLine={false}
                 tickFormatter={(v) => `${v}%`}
               />
               <Tooltip
@@ -97,8 +97,10 @@ export function SearchVisibilityTrendChart() {
                   border: "1px solid hsl(var(--border))",
                   borderRadius: "8px",
                   fontSize: "12px",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
                 formatter={(value: number) => [`${value}%`, ""]}
+                cursor={{ stroke: "hsl(var(--foreground) / 0.15)", strokeWidth: 1 }}
               />
               <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "12px" }} iconType="plainline" />
               {platforms.map((p) => (
@@ -107,9 +109,12 @@ export function SearchVisibilityTrendChart() {
                   type="monotone"
                   dataKey={`${p}_top10`}
                   name={`${p} (Top 10)`}
-                  fill={`${PLATFORM_COLORS[p] || "hsl(var(--chart-1))"} / 0.15`}
-                  stroke={PLATFORM_COLORS[p] || "hsl(var(--chart-1))"}
-                  strokeWidth={2.5}
+                  fill={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  fillOpacity={0.08}
+                  stroke={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  strokeWidth={3}
+                  dot={false}
+                  activeDot={{ r: 5, strokeWidth: 2, fill: "hsl(var(--card))" }}
                   connectNulls={false}
                 />
               ))}
@@ -119,10 +124,11 @@ export function SearchVisibilityTrendChart() {
                   type="monotone"
                   dataKey={`${p}_elite`}
                   name={`${p} (Elite)`}
-                  stroke={PLATFORM_COLORS[p] || "hsl(var(--chart-1))"}
-                  strokeWidth={1.5}
+                  stroke={PLATFORM_COLORS[p] || "hsl(222, 47%, 20%)"}
+                  strokeWidth={1.8}
                   strokeDasharray="5 3"
                   dot={false}
+                  activeDot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--card))" }}
                   connectNulls={false}
                 />
               ))}
