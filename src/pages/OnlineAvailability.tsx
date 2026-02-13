@@ -28,7 +28,7 @@ export default function OnlineAvailability() {
 
   useEffect(() => {
     supabase
-      .from("ola_exec_summary")
+      .from("ola_exec_summary_mat")
       .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
       .then(({ data: rows }) => {
         if (rows) {

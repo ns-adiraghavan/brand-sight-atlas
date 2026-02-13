@@ -14,6 +14,87 @@ export type Database = {
   }
   public: {
     Tables: {
+      cross_platform_correlation_mat: {
+        Row: {
+          alignment_correlation: number | null
+          platform: string | null
+        }
+        Insert: {
+          alignment_correlation?: number | null
+          platform?: string | null
+        }
+        Update: {
+          alignment_correlation?: number | null
+          platform?: string | null
+        }
+        Relationships: []
+      }
+      ola_availability_distribution_mat: {
+        Row: {
+          availability_band: string | null
+          platform: string | null
+          sku_count: number | null
+        }
+        Insert: {
+          availability_band?: string | null
+          platform?: string | null
+          sku_count?: number | null
+        }
+        Update: {
+          availability_band?: string | null
+          platform?: string | null
+          sku_count?: number | null
+        }
+        Relationships: []
+      }
+      ola_bottom_skus_mat: {
+        Row: {
+          base_pack: string | null
+          business_group_clean: string | null
+          platform: string | null
+          risk_band: string | null
+          sku_availability_ratio: number | null
+          total_days: number | null
+        }
+        Insert: {
+          base_pack?: string | null
+          business_group_clean?: string | null
+          platform?: string | null
+          risk_band?: string | null
+          sku_availability_ratio?: number | null
+          total_days?: number | null
+        }
+        Update: {
+          base_pack?: string | null
+          business_group_clean?: string | null
+          platform?: string | null
+          risk_band?: string | null
+          sku_availability_ratio?: number | null
+          total_days?: number | null
+        }
+        Relationships: []
+      }
+      ola_exec_summary_mat: {
+        Row: {
+          availability_pct: number | null
+          must_have_availability_pct: number | null
+          platform: string | null
+          sku_reliability_pct: number | null
+        }
+        Insert: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          sku_reliability_pct?: number | null
+        }
+        Update: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          sku_reliability_pct?: number | null
+        }
+        Relationships: []
+      }
       ola_fact: {
         Row: {
           availability: string | null
@@ -89,6 +170,60 @@ export type Database = {
           screenshot_url?: string | null
           seller_name?: string | null
           top_packs_flag?: string | null
+        }
+        Relationships: []
+      }
+      ola_pincode_volatility_mat: {
+        Row: {
+          avg_availability: number | null
+          location: string | null
+          platform: string | null
+          volatility_index: number | null
+        }
+        Insert: {
+          avg_availability?: number | null
+          location?: string | null
+          platform?: string | null
+          volatility_index?: number | null
+        }
+        Update: {
+          avg_availability?: number | null
+          location?: string | null
+          platform?: string | null
+          volatility_index?: number | null
+        }
+        Relationships: []
+      }
+      ola_platform_gap_mat: {
+        Row: {
+          availability_gap: number | null
+        }
+        Insert: {
+          availability_gap?: number | null
+        }
+        Update: {
+          availability_gap?: number | null
+        }
+        Relationships: []
+      }
+      ola_weekly_trend_mat: {
+        Row: {
+          availability_pct: number | null
+          must_have_availability_pct: number | null
+          platform: string | null
+          week: string | null
+        }
+        Insert: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          week?: string | null
+        }
+        Update: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          week?: string | null
         }
         Relationships: []
       }
