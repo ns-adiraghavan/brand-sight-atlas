@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, AlertTriangle, Star, MapPin } from "lucide-re
 import { olaKPIs } from "@/data/mockData";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { applyProbabilisticLanguage } from "@/lib/insights";
+import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 
 export default function OnlineAvailability() {
   const { preset, getTimePhrase } = useDateRange();
@@ -123,6 +124,17 @@ export default function OnlineAvailability() {
           <div className="mt-3">
             <BottomSKUsTable />
           </div>
+        </section>
+
+        {/* ===== SECTION 4: ALIGNMENT ===== */}
+        <section>
+          <AlignmentInsight
+            data={[
+              { platform: "Amazon", correlation: 0.72, interpretation: "Platforms where availability is consistently high also tend to surface more prominently in search—suggesting execution quality compounds into visibility gains." },
+              { platform: "Flipkart", correlation: 0.58, interpretation: "" },
+              { platform: "BigBasket", correlation: -0.12, interpretation: "" },
+            ]}
+          />
         </section>
       </div>
     </DashboardLayout>
