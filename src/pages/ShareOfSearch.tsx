@@ -282,13 +282,7 @@ export default function ShareOfSearch() {
 
         {/* ===== SECTION 4: ALIGNMENT ===== */}
         <section>
-          <AlignmentInsight
-            data={[
-              { platform: "Amazon", correlation: 0.72, interpretation: "Platforms with higher availability tend to show stronger search visibility—reinforcing the case for stock-first strategies on high-intent keywords." },
-              { platform: "Flipkart", correlation: 0.58, interpretation: "" },
-              { platform: "BigBasket", correlation: -0.12, interpretation: "" },
-            ]}
-          />
+          <AlignmentInsight />
         </section>
       </div>
     </DashboardLayout>
