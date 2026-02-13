@@ -27,7 +27,7 @@ export function AlignmentInsight() {
 
   useEffect(() => {
     supabase
-      .from("cross_platform_correlation")
+      .from("cross_platform_correlation_mat")
       .select("platform, alignment_correlation")
       .then(({ data: rows }) => {
         if (rows) {

@@ -32,7 +32,7 @@ export function AvailabilityTrendChart() {
 
   useEffect(() => {
     supabase
-      .from("ola_weekly_trend")
+      .from("ola_weekly_trend_mat")
       .select("week, platform, availability_pct, must_have_availability_pct")
       .order("week", { ascending: true })
       .then(({ data: rows }) => {

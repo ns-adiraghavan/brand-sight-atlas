@@ -26,7 +26,7 @@ export function AvailabilityDistribution() {
 
   useEffect(() => {
     supabase
-      .from("ola_availability_distribution")
+      .from("ola_availability_distribution_mat")
       .select("availability_band, platform, sku_count")
       .then(({ data: rows }) => {
         if (rows && rows.length > 0) {
