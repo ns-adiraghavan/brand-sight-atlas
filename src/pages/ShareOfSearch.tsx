@@ -3,14 +3,13 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { SearchVisibilityTrendChart } from "@/components/dashboard/SearchVisibilityTrendChart";
 import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataStatusIndicator";
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
-import { TrendingUp, TrendingDown, Hash, Eye, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { useDateRange } from "@/contexts/DateRangeContext";
-import { CHART_LIMITS } from "@/lib/metrics";
-import { applyProbabilisticLanguage } from "@/lib/insights";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
+import { ExecutionDiagnostics } from "@/components/dashboard/ExecutionDiagnostics";
 
 interface ExecSummary {
   platform: string;
@@ -86,7 +85,7 @@ export default function ShareOfSearch() {
       supabase.from("sos_exec_summary_mat").select("platform, top10_presence_pct, elite_rank_share_pct, exclusive_share_pct"),
       supabase.from("sos_rank_distribution_mat").select("rank_bucket, listing_count, platform"),
       supabase.from("sos_keyword_volatility_mat").select("search_keyword, mean_rank, rank_volatility, platform").order("rank_volatility", { ascending: false }).limit(20),
-      supabase.from("sos_keyword_risk_mat").select("search_keyword, mean_rank, performance_band, platform").limit(CHART_LIMITS.maxRows),
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, mean_rank, performance_band, platform").limit(10),
     ]).then(([execRes, distRes, volRes, riskRes]) => {
       if (execRes.data) setExec(execRes.data as ExecSummary[]);
 
@@ -237,11 +236,14 @@ export default function ShareOfSearch() {
           <SearchVisibilityTrendChart />
         </section>
 
-        {/* ===== SECTION 3: DIAGNOSTICS ===== */}
+        {/* ===== SECTION 3: EXECUTION DIAGNOSTICS ===== */}
+        <ExecutionDiagnostics variant="sos" />
+
+        {/* ===== SECTION 3b: POSITION & INSTABILITY ===== */}
         <section>
           <SectionHeader
-            title="Diagnostics"
-            subtitle="Position structure, instability signals, and action priorities"
+            title="Position Analysis"
+            subtitle="Rank distribution and instability signals"
           />
 
           <div className="grid grid-cols-5 gap-4">
@@ -320,55 +322,6 @@ export default function ShareOfSearch() {
                 </div>
               )}
             </div>
-          </div>
-
-          {/* Risk Band Table — full width */}
-          <div className="mt-3 bg-card rounded-xl border border-border p-6">
-            <div className="mb-4">
-              <h3 className="text-base font-semibold text-foreground">Keyword Risk Classification</h3>
-              <p className="text-sm text-muted-foreground">Keywords by competitive position band</p>
-            </div>
-            {loading ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Keyword</th>
-                      <th className="text-center text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Mean Rank</th>
-                      <th className="text-center text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Risk Band</th>
-                      <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wide py-3 px-2">Platform</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {risk.map((item, idx) => {
-                      const meanRank = Number(item.mean_rank);
-                      return (
-                        <tr key={idx} className="border-b border-border/50 hover:bg-muted/20 transition-colors">
-                          <td className="py-3 px-2">
-                            <span className="text-sm font-medium text-foreground">{item.search_keyword}</span>
-                          </td>
-                          <td className="py-3 px-2 text-center">
-                            <span className={`inline-flex items-center justify-center w-10 h-7 rounded text-sm font-bold ${getRankBg(meanRank)} ${getRankColor(meanRank)}`}>
-                              #{meanRank.toFixed(0)}
-                            </span>
-                          </td>
-                          <td className="py-3 px-2 text-center">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getRiskBandStyle(item.performance_band)}`}>
-                              {item.performance_band}
-                            </span>
-                          </td>
-                          <td className="py-3 px-2">
-                            <span className="text-sm text-muted-foreground capitalize">{item.platform}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         </section>
 

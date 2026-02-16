@@ -557,6 +557,14 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_city_persistence: {
+        Row: {
+          location: string | null
+          persistence_score: number | null
+          platform: string | null
+        }
+        Relationships: []
+      }
       ola_exec_summary: {
         Row: {
           availability_pct: number | null
@@ -571,6 +579,15 @@ export type Database = {
           new_launch_availability_pct: number | null
           platform: string | null
           week: string | null
+        }
+        Relationships: []
+      }
+      ola_persistent_low_skus: {
+        Row: {
+          base_pack: string | null
+          pct_bad_weeks: number | null
+          platform: string | null
+          weeks_tracked: number | null
         }
         Relationships: []
       }
@@ -603,10 +620,11 @@ export type Database = {
       ola_top_fix_opportunities: {
         Row: {
           base_pack: string | null
-          days_unavailable: number | null
+          impact_score: number | null
           locations_affected: number | null
           platform: string | null
           total_days: number | null
+          unavailability_pct: number | null
         }
         Relationships: []
       }

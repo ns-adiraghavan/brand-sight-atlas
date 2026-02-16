@@ -2,13 +2,12 @@ import { useEffect, useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { AvailabilityTrendChart } from "@/components/dashboard/AvailabilityTrendChart";
 import { PincodeVolatilityScatter } from "@/components/dashboard/PincodeVolatilityScatter";
-import { BottomSKUsTable } from "@/components/dashboard/BottomSKUsTable";
+import { ExecutionDiagnostics } from "@/components/dashboard/ExecutionDiagnostics";
 import { AvailabilityDistribution } from "@/components/dashboard/AvailabilityDistribution";
 import { DataStatusIndicator, useDataStatus } from "@/components/dashboard/DataStatusIndicator";
 import { SectionHeader } from "@/components/dashboard/SectionHeader";
-import { TrendingUp, TrendingDown, AlertTriangle, Shield } from "lucide-react";
+import { AlertTriangle, Shield } from "lucide-react";
 import { useDateRange } from "@/contexts/DateRangeContext";
-import { applyProbabilisticLanguage } from "@/lib/insights";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
@@ -221,23 +220,21 @@ export default function OnlineAvailability() {
           <AvailabilityTrendChart />
         </section>
 
-        {/* ===== SECTION 3: DIAGNOSTIC DEEP DIVE ===== */}
+        {/* ===== SECTION 3: EXECUTION DIAGNOSTICS ===== */}
+        <ExecutionDiagnostics variant="ola" />
+
+        {/* ===== SECTION 3b: OPERATIONAL DEEP DIVE ===== */}
         <section>
           <SectionHeader
-            title="Diagnostics"
-            subtitle="Operational Risk Prioritization"
+            title="Operational Deep Dive"
+            subtitle="Location and distribution diagnostics"
           />
-
-          <div className="space-y-3">
-            <BottomSKUsTable />
-
-            <div className="grid grid-cols-5 gap-3">
-              <div className="col-span-3">
-                <PincodeVolatilityScatter />
-              </div>
-              <div className="col-span-2">
-                <AvailabilityDistribution />
-              </div>
+          <div className="grid grid-cols-5 gap-3">
+            <div className="col-span-3">
+              <PincodeVolatilityScatter />
+            </div>
+            <div className="col-span-2">
+              <AvailabilityDistribution />
             </div>
           </div>
         </section>
