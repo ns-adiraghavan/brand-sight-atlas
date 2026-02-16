@@ -600,6 +600,16 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_top_fix_opportunities: {
+        Row: {
+          base_pack: string | null
+          days_unavailable: number | null
+          locations_affected: number | null
+          platform: string | null
+          total_days: number | null
+        }
+        Relationships: []
+      }
       ola_vendor_health: {
         Row: {
           availability_pct: number | null

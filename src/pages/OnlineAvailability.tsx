@@ -73,12 +73,47 @@ export default function OnlineAvailability() {
   const mustHaveBand = getPerformanceBand(avgMustHave);
   const reliabilityBand = getPerformanceBand(avgReliability);
 
-  const availDirection = avgAvailability && avgAvailability > 0.8 ? "trending positively" : "under pressure";
+  // Build structured 4-part insight
+  const platformsSorted = [...execData].sort((a, b) => (b.availability_pct ?? 0) - (a.availability_pct ?? 0));
+  const topPlatform = platformsSorted[0];
+  const bottomPlatform = platformsSorted[platformsSorted.length - 1];
+  const vendorGapPP = topPlatform && bottomPlatform
+    ? ((topPlatform.availability_pct - bottomPlatform.availability_pct) * 100).toFixed(1)
+    : null;
 
-  const execInsight = applyProbabilisticLanguage(
-    `Availability is ${availDirection} ${getTimePhrase()}.${mustHaveDeltaPP != null && mustHaveDeltaPP < 0 ? ` Must-Have trails target by ${Math.abs(mustHaveDeltaPP).toFixed(1)}pp—review replenishment strategy.` : ""} Focus on pincode consistency and tail-SKU stabilization.`,
-    dataStatus.coverage
-  );
+  const insightLines: string[] = [];
+
+  // 1. Metric change
+  if (avgAvailability != null) {
+    insightLines.push(
+      `Availability stands at ${(avgAvailability * 100).toFixed(1)}% over the last 30 days.`
+    );
+  }
+
+  // 2. Vendor comparison
+  if (vendorGapPP && topPlatform && bottomPlatform && Number(vendorGapPP) > 0) {
+    insightLines.push(
+      `${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)} trails ${topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1)} by ${vendorGapPP}pp.`
+    );
+  }
+
+  // 3. Interpretation
+  if (vendorGapPP && Number(vendorGapPP) > 2) {
+    insightLines.push(
+      "This gap suggests platform-specific listing or replenishment issues."
+    );
+  } else if (mustHaveDeltaPP != null && mustHaveDeltaPP < 0) {
+    insightLines.push(
+      `Must-have products miss the 90% target by ${Math.abs(mustHaveDeltaPP).toFixed(1)}pp, indicating frequent out-of-stock days.`
+    );
+  }
+
+  // 4. Action
+  if (bottomPlatform) {
+    insightLines.push(
+      `Prioritize must-have SKUs with availability below 70% on ${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)}.`
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -96,9 +131,13 @@ export default function OnlineAvailability() {
           />
 
           {/* Insight paragraph — 30% shorter */}
-          <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 mb-5">
-            <p className="text-xs text-foreground leading-snug">{execInsight}</p>
-          </div>
+          {insightLines.length > 0 && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 mb-5 space-y-1">
+              {insightLines.map((line, i) => (
+                <p key={i} className="text-xs text-foreground leading-snug">{line}</p>
+              ))}
+            </div>
+          )}
 
           {/* KPI row from ola_exec_summary */}
           <div className="bg-card rounded-xl border border-border p-6">
