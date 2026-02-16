@@ -206,6 +206,30 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_vendor_health_mat: {
+        Row: {
+          availability_pct: number | null
+          must_have_availability_pct: number | null
+          platform: string | null
+          sku_reliability_pct: number | null
+          skus_tracked: number | null
+        }
+        Insert: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
+        }
+        Update: {
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
+        }
+        Relationships: []
+      }
       ola_weekly_trend_mat: {
         Row: {
           availability_pct: number | null
@@ -386,6 +410,33 @@ export type Database = {
           listing_count?: number | null
           platform?: string | null
           rank_bucket?: string | null
+        }
+        Relationships: []
+      }
+      sos_vendor_health_mat: {
+        Row: {
+          avg_rank_volatility: number | null
+          elite_rank_share_pct: number | null
+          keywords_tracked: number | null
+          organic_share_pct: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+        }
+        Insert: {
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
+          keywords_tracked?: number | null
+          organic_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Update: {
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
+          keywords_tracked?: number | null
+          organic_share_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
         }
         Relationships: []
       }

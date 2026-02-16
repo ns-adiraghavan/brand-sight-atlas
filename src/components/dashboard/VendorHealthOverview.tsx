@@ -106,7 +106,7 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   const [loading, setLoading] = useState(true);
 
   const metrics = variant === "ola" ? OLA_METRICS : SOS_METRICS;
-  const viewName = variant === "ola" ? "ola_vendor_health" : "sos_vendor_health";
+  const viewName = variant === "ola" ? "ola_vendor_health_mat" : "sos_vendor_health_mat";
 
   useEffect(() => {
     supabase
