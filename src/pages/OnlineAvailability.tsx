@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, AlertTriangle, Shield } from "lucide-react";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
+import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExecSummary {
@@ -136,6 +137,7 @@ export default function OnlineAvailability() {
                   <div className="flex items-center gap-2 mb-1">
                     {reliabilityBand.icon || <Shield className={`w-4 h-4 ${reliabilityBand.color}`} />}
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wide">SKU Reliability</span>
+                    <MetricTooltip definition="% of SKUs maintaining ≥80% availability across a 90-day window." />
                   </div>
                   <p className={`text-3xl font-bold ${reliabilityBand.color}`}>
                     {avgReliability != null ? `${(avgReliability * 100).toFixed(1)}%` : "—"}
