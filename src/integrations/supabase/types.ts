@@ -410,6 +410,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_health_overview_mat: {
+        Row: {
+          availability_pct: number | null
+          last_date: string | null
+          platform: string | null
+          skus_tracked: number | null
+        }
+        Insert: {
+          availability_pct?: number | null
+          last_date?: string | null
+          platform?: string | null
+          skus_tracked?: number | null
+        }
+        Update: {
+          availability_pct?: number | null
+          last_date?: string | null
+          platform?: string | null
+          skus_tracked?: number | null
+        }
+        Relationships: []
+      }
+      vendor_search_overview_mat: {
+        Row: {
+          keywords_tracked: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+        }
+        Insert: {
+          keywords_tracked?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Update: {
+          keywords_tracked?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       cross_platform_correlation: {
@@ -583,6 +622,7 @@ export type Database = {
       vendor_health_overview: {
         Row: {
           availability_pct: number | null
+          last_date: string | null
           platform: string | null
           skus_tracked: number | null
         }

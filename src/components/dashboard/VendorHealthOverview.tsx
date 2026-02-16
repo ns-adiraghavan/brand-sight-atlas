@@ -22,8 +22,8 @@ export function VendorHealthOverview() {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("vendor_health_overview").select("platform, availability_pct, skus_tracked"),
-      supabase.from("vendor_search_overview").select("platform, top10_presence_pct, keywords_tracked"),
+      supabase.from("vendor_health_overview_mat").select("platform, availability_pct, skus_tracked"),
+      supabase.from("vendor_search_overview_mat").select("platform, top10_presence_pct, keywords_tracked"),
     ]).then(([hRes, sRes]) => {
       if (hRes.data) setHealth(hRes.data as VendorHealth[]);
       if (sRes.data) setSearch(sRes.data as VendorSearch[]);
