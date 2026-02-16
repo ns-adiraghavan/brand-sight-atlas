@@ -1,4 +1,5 @@
 import { Link2 } from "lucide-react";
+import { MetricTooltip } from "./MetricTooltip";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -48,6 +49,7 @@ export function AlignmentInsight() {
       <div className="flex items-center gap-2 mb-3">
         <Link2 className="w-4 h-4 text-muted-foreground" />
         <h4 className="text-sm font-semibold text-foreground">Execution × Visibility Alignment</h4>
+        <MetricTooltip definition="Alignment Correlation = Pearson correlation between Availability % and Top-10 Presence % across platforms." />
       </div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         {data.map((item) => (

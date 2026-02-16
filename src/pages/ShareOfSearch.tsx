@@ -9,6 +9,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { CHART_LIMITS } from "@/lib/metrics";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 import { supabase } from "@/integrations/supabase/client";
+import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 
 interface ExecSummary {
   platform: string;
@@ -155,6 +156,7 @@ export default function ShareOfSearch() {
                   <div className="flex items-center gap-2 mb-1">
                     <Target className="w-4 h-4 text-status-success" />
                     <span className="text-[10px] text-muted-foreground uppercase tracking-wide">Elite Share</span>
+                    <MetricTooltip definition="% of Top 10 listings that rank within positions 1–3." />
                   </div>
                   <p className="text-2xl font-semibold text-foreground">
                     {avgElite != null ? `${(avgElite * 100).toFixed(1)}%` : "—"}

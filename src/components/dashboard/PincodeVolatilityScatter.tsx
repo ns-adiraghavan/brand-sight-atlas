@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { IllustrativeLabel } from "./IllustrativeLabel";
+import { MetricTooltip } from "./MetricTooltip";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -52,7 +53,7 @@ export function PincodeVolatilityScatter() {
         <div>
           <h4 className="text-sm font-semibold text-foreground">Pincode Volatility</h4>
           <p className="text-xs text-muted-foreground">
-            Availability % vs volatility index {getTimePhrase()}
+            Availability % vs volatility index {getTimePhrase()} <MetricTooltip definition="Volatility Index = standard deviation of daily availability rates per pincode." />
           </p>
         </div>
         {highVolCount > 0 && (
