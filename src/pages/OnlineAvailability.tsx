@@ -85,7 +85,7 @@ export default function OnlineAvailability() {
       <div className="space-y-4">
 
         {/* ===== SECTION 0: VENDOR HEALTH ===== */}
-        <VendorHealthOverview />
+        <VendorHealthOverview variant="ola" />
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>

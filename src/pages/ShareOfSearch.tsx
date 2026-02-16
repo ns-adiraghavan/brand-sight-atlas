@@ -128,7 +128,7 @@ export default function ShareOfSearch() {
       <div className="space-y-5">
 
         {/* ===== SECTION 0: VENDOR HEALTH ===== */}
-        <VendorHealthOverview />
+        <VendorHealthOverview variant="sos" />
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>
