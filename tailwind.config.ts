@@ -32,6 +32,10 @@ export default {
           info: "hsl(var(--status-info))",
           "info-bg": "hsl(var(--status-info-bg))",
         },
+        platform: {
+          dmart: "hsl(var(--platform-dmart))",
+          jiomart: "hsl(var(--platform-jiomart))",
+        },
         heatmap: {
           excellent: "hsl(var(--heatmap-excellent))",
           good: "hsl(var(--heatmap-good))",

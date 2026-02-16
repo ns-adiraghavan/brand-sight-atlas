@@ -18,10 +18,10 @@ interface ChartPoint {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  dmart: "hsl(222, 47%, 20%)",
-  jiomart: "hsl(160, 84%, 39%)",
-  amazon: "hsl(210, 100%, 50%)",
-  flipkart: "hsl(38, 92%, 50%)",
+  dmart: "hsl(217, 91%, 60%)",
+  jiomart: "hsl(271, 81%, 56%)",
+  amazon: "hsl(38, 92%, 50%)",
+  flipkart: "hsl(142, 71%, 45%)",
 };
 
 export function SearchVisibilityTrendChart() {
