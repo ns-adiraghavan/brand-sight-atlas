@@ -580,6 +580,22 @@ export type Database = {
         }
         Relationships: []
       }
+      vendor_health_overview: {
+        Row: {
+          availability_pct: number | null
+          platform: string | null
+          skus_tracked: number | null
+        }
+        Relationships: []
+      }
+      vendor_search_overview: {
+        Row: {
+          keywords_tracked: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

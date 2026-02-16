@@ -10,6 +10,7 @@ import { CHART_LIMITS } from "@/lib/metrics";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
+import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 
 interface ExecSummary {
   platform: string;
@@ -125,6 +126,9 @@ export default function ShareOfSearch() {
   return (
     <DashboardLayout>
       <div className="space-y-5">
+
+        {/* ===== SECTION 0: VENDOR HEALTH ===== */}
+        <VendorHealthOverview />
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>

@@ -11,6 +11,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { applyProbabilisticLanguage } from "@/lib/insights";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
+import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExecSummary {
@@ -82,6 +83,9 @@ export default function OnlineAvailability() {
   return (
     <DashboardLayout>
       <div className="space-y-4">
+
+        {/* ===== SECTION 0: VENDOR HEALTH ===== */}
+        <VendorHealthOverview />
 
         {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
         <section>
