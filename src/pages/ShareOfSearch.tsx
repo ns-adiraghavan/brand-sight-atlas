@@ -118,10 +118,47 @@ export default function ShareOfSearch() {
   const avgTop10 = exec.length > 0 ? exec.reduce((s, d) => s + d.top10_presence_pct, 0) / exec.length : null;
   const avgElite = exec.length > 0 ? exec.reduce((s, d) => s + d.elite_rank_share_pct, 0) / exec.length : null;
 
-  const execInsight = applyProbabilisticLanguage(
-    `Search visibility ${avgTop10 && avgTop10 > 0.4 ? "holds a solid base" : "faces structural constraints"} ${getTimePhrase()}, with ${avgElite && avgElite > 0.3 ? "healthy elite positioning" : "elite share requiring attention"}. Sustaining momentum will depend on keyword-level consistency and proactive competitive response.`,
-    dataStatus.coverage
-  );
+  // Build structured 4-part insight
+  const platformsSorted = [...exec].sort((a, b) => (b.top10_presence_pct ?? 0) - (a.top10_presence_pct ?? 0));
+  const topPlatform = platformsSorted[0];
+  const bottomPlatform = platformsSorted[platformsSorted.length - 1];
+  const presenceGapPP = topPlatform && bottomPlatform
+    ? ((topPlatform.top10_presence_pct - bottomPlatform.top10_presence_pct) * 100).toFixed(1)
+    : null;
+
+  const sosInsightLines: string[] = [];
+
+  // 1. Metric change
+  if (avgTop10 != null) {
+    sosInsightLines.push(
+      `Page 1 presence is at ${(avgTop10 * 100).toFixed(1)}% over the last 30 days.`
+    );
+  }
+
+  // 2. Vendor comparison
+  if (presenceGapPP && topPlatform && bottomPlatform && Number(presenceGapPP) > 0) {
+    sosInsightLines.push(
+      `${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)} trails ${topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1)} by ${presenceGapPP}pp on page 1 presence.`
+    );
+  }
+
+  // 3. Interpretation
+  if (presenceGapPP && Number(presenceGapPP) > 2) {
+    sosInsightLines.push(
+      "This gap points to rank drops on the weaker platform, likely from bid or content gaps."
+    );
+  } else if (avgElite != null && avgElite < 0.3) {
+    sosInsightLines.push(
+      "Low elite share means few keywords hold top-3 spots, limiting click-through rates."
+    );
+  }
+
+  // 4. Action
+  if (bottomPlatform) {
+    sosInsightLines.push(
+      `Review keyword bids and content quality for rank-drop keywords on ${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)}.`
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -138,9 +175,13 @@ export default function ShareOfSearch() {
             action={<DataStatusIndicator status={dataStatus} />}
           />
 
-          <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 mb-4">
-            <p className="text-sm text-foreground leading-relaxed">{execInsight}</p>
-          </div>
+          {sosInsightLines.length > 0 && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 mb-4 space-y-1">
+              {sosInsightLines.map((line, i) => (
+                <p key={i} className="text-xs text-foreground leading-snug">{line}</p>
+              ))}
+            </div>
+          )}
 
           <div className="bg-card rounded-xl border border-border p-5">
             {loading ? (
