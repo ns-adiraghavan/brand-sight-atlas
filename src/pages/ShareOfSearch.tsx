@@ -9,6 +9,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
+import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { ExecutionDiagnostics } from "@/components/dashboard/ExecutionDiagnostics";
 
 interface ExecSummary {
@@ -162,6 +163,9 @@ export default function ShareOfSearch() {
   return (
     <DashboardLayout>
       <div className="space-y-5">
+
+        {/* ===== KEY TAKEAWAYS ===== */}
+        <KeyTakeaways variant="sos" />
 
         {/* ===== SECTION 0: VENDOR HEALTH ===== */}
         <VendorHealthOverview variant="sos" />

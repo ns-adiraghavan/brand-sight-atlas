@@ -11,6 +11,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
+import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ExecSummary {
@@ -117,6 +118,9 @@ export default function OnlineAvailability() {
   return (
     <DashboardLayout>
       <div className="space-y-4">
+
+        {/* ===== KEY TAKEAWAYS ===== */}
+        <KeyTakeaways variant="ola" />
 
         {/* ===== SECTION 0: VENDOR HEALTH ===== */}
         <VendorHealthOverview variant="ola" />
