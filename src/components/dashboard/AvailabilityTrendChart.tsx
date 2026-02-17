@@ -25,15 +25,18 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 export function AvailabilityTrendChart() {
-  const { getTimePhrase } = useDateRange();
+  const { dateRange, getTimePhrase } = useDateRange();
   const [data, setData] = useState<ChartPoint[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     supabase
       .from("ola_weekly_trend_mat")
       .select("week, platform, availability_pct, must_have_availability_pct")
+      .gte("week", dateRange.from.toISOString())
+      .lte("week", dateRange.to.toISOString())
       .order("week", { ascending: true })
       .then(({ data: rows }) => {
         if (rows && rows.length > 0) {
@@ -56,10 +59,12 @@ export function AvailabilityTrendChart() {
             }
           }
           setData(Array.from(weekMap.values()));
+        } else {
+          setData([]);
         }
         setLoading(false);
       });
-  }, []);
+  }, [dateRange.from.getTime(), dateRange.to.getTime()]);
 
   const hasData = data.length >= 2;
 

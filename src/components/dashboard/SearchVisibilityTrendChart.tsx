@@ -25,15 +25,18 @@ const PLATFORM_COLORS: Record<string, string> = {
 };
 
 export function SearchVisibilityTrendChart() {
-  const { getTimePhrase } = useDateRange();
+  const { dateRange, getTimePhrase } = useDateRange();
   const [data, setData] = useState<ChartPoint[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    setLoading(true);
     supabase
       .from("sos_weekly_trend_mat")
       .select("week, platform, top10_presence_pct, elite_rank_share_pct")
+      .gte("week", dateRange.from.toISOString())
+      .lte("week", dateRange.to.toISOString())
       .order("week", { ascending: true })
       .then(({ data: rows }) => {
         if (rows && rows.length > 0) {
@@ -54,10 +57,12 @@ export function SearchVisibilityTrendChart() {
             }
           }
           setData(Array.from(weekMap.values()));
+        } else {
+          setData([]);
         }
         setLoading(false);
       });
-  }, []);
+  }, [dateRange.from.getTime(), dateRange.to.getTime()]);
 
   const hasData = data.length >= 2;
 
