@@ -518,6 +518,13 @@ export type Database = {
         }
         Relationships: []
       }
+      data_date_range: {
+        Row: {
+          end_date: string | null
+          start_date: string | null
+        }
+        Relationships: []
+      }
       exec_overview: {
         Row: {
           availability_pct: number | null
