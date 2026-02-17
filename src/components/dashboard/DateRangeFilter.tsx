@@ -12,29 +12,32 @@ export function DateRangeFilter() {
   const [maxDate, setMaxDate] = useState<Date | null>(null);
   const [totalDays, setTotalDays] = useState(1);
 
-  // Load min/max from data
+  // Load min/max from both OLA and SOS data
   useEffect(() => {
-    supabase
-      .from("ola_weekly_trend_mat")
-      .select("week")
-      .order("week", { ascending: true })
-      .limit(1)
-      .then(({ data: minRows }) => {
-        supabase
-          .from("ola_weekly_trend_mat")
-          .select("week")
-          .order("week", { ascending: false })
-          .limit(1)
-          .then(({ data: maxRows }) => {
-            if (minRows?.[0]?.week && maxRows?.[0]?.week) {
-              const mn = new Date(minRows[0].week);
-              const mx = new Date(maxRows[0].week);
-              setMinDate(mn);
-              setMaxDate(mx);
-              setTotalDays(Math.max(differenceInDays(mx, mn), 1));
-            }
-          });
-      });
+    Promise.all([
+      supabase.from("ola_weekly_trend_mat").select("week").order("week", { ascending: true }).limit(1),
+      supabase.from("ola_weekly_trend_mat").select("week").order("week", { ascending: false }).limit(1),
+      supabase.from("sos_weekly_trend_mat").select("week").order("week", { ascending: true }).limit(1),
+      supabase.from("sos_weekly_trend_mat").select("week").order("week", { ascending: false }).limit(1),
+    ]).then(([olaMin, olaMax, sosMin, sosMax]) => {
+      const candidates: Date[] = [];
+      if (olaMin.data?.[0]?.week) candidates.push(new Date(olaMin.data[0].week));
+      if (sosMin.data?.[0]?.week) candidates.push(new Date(sosMin.data[0].week));
+      const maxCandidates: Date[] = [];
+      if (olaMax.data?.[0]?.week) maxCandidates.push(new Date(olaMax.data[0].week));
+      if (sosMax.data?.[0]?.week) maxCandidates.push(new Date(sosMax.data[0].week));
+
+      if (candidates.length > 0 && maxCandidates.length > 0) {
+        const mn = new Date(Math.min(...candidates.map(d => d.getTime())));
+        const mx = new Date(Math.max(...maxCandidates.map(d => d.getTime())));
+        setMinDate(mn);
+        setMaxDate(mx);
+        const days = Math.max(differenceInDays(mx, mn), 1);
+        setTotalDays(days);
+        // Initialize the range to the full data extent
+        setCustomRange(mn, mx);
+      }
+    });
   }, []);
 
   const dateToSlider = useCallback(
