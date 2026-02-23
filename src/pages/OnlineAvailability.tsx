@@ -30,14 +30,31 @@ export default function OnlineAvailability() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Get the latest week from ola_exec_summary_mat
     supabase
-      .from("ola_exec_summary")
-      .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
-      .then(({ data: rows }) => {
-        if (rows) {
-          setExecData(rows.filter((r) => r.platform) as ExecRow[]);
-        }
-        setLoading(false);
+      .from("ola_exec_summary_mat")
+      .select("week")
+      .order("week", { ascending: false })
+      .limit(1)
+      .then(({ data: weekRows }) => {
+        const latestWeek = weekRows?.[0]?.week;
+        if (!latestWeek) { setLoading(false); return; }
+        supabase
+          .from("ola_exec_summary_mat")
+          .select("platform, availability_pct, must_have_availability_pct")
+          .eq("week", latestWeek)
+          .then(({ data: rows }) => {
+            if (rows) {
+              setExecData(rows.filter((r) => r.platform).map(r => ({
+                ...r,
+                platform: r.platform!,
+                availability_pct: r.availability_pct != null ? Number(r.availability_pct) : null,
+                must_have_availability_pct: r.must_have_availability_pct != null ? Number(r.must_have_availability_pct) : null,
+                sku_reliability_pct: null,
+              })) as ExecRow[]);
+            }
+            setLoading(false);
+          });
       });
   }, []);
 

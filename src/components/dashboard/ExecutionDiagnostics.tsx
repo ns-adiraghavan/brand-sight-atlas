@@ -153,8 +153,8 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
   async function loadSos() {
     const [vendorRes, riskRes] = await Promise.all([
-      supabase.from("sos_vendor_health").select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct"),
-      supabase.from("sos_keyword_risk").select("search_keyword, performance_band, platform"),
+      supabase.from("vendor_search_overview_mat").select("platform, keywords_tracked, top10_presence_pct"),
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
