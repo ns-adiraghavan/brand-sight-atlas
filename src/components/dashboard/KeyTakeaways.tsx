@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Lightbulb } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ShieldCheck, Target, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface VendorHealthOLA {
   platform: string;
@@ -36,22 +37,63 @@ function pct(v: number | null) {
   return v != null ? `${(v * 100).toFixed(0)}%` : "—";
 }
 
-function trendDirection(rows: { week: string; value: number | null }[]): "up" | "down" | "flat" {
-  if (rows.length < 2) return "flat";
+function pctDiff(v: number | null) {
+  if (v == null) return null;
+  const val = (v * 100);
+  return val >= 0 ? `+${val.toFixed(1)}%` : `${val.toFixed(1)}%`;
+}
+
+function trendDirection(rows: { week: string; value: number | null }[]): { dir: "up" | "down" | "flat"; diff: number } {
+  if (rows.length < 2) return { dir: "flat", diff: 0 };
   const sorted = [...rows].sort((a, b) => a.week.localeCompare(b.week));
   const recent = sorted.slice(-2);
   const diff = (recent[1].value ?? 0) - (recent[0].value ?? 0);
-  if (diff > 0.005) return "up";
-  if (diff < -0.005) return "down";
-  return "flat";
+  if (diff > 0.005) return { dir: "up", diff };
+  if (diff < -0.005) return { dir: "down", diff };
+  return { dir: "flat", diff: 0 };
+}
+
+type TrendDir = "up" | "down" | "flat";
+
+interface InsightCard {
+  icon: typeof ShieldCheck;
+  headline: string;
+  explanation: string;
+  metric: string;
+  trend: TrendDir;
+  tint: "green" | "red" | "amber";
 }
 
 interface KeyTakeawaysProps {
   variant: "ola" | "sos";
 }
 
+const tintStyles: Record<string, string> = {
+  green: "bg-emerald-500/8 border-emerald-500/20",
+  red: "bg-red-500/8 border-red-500/20",
+  amber: "bg-amber-500/8 border-amber-500/20",
+};
+
+const tintIconBg: Record<string, string> = {
+  green: "bg-emerald-500/15 text-emerald-600",
+  red: "bg-red-500/15 text-red-600",
+  amber: "bg-amber-500/15 text-amber-600",
+};
+
+const trendColor: Record<TrendDir, string> = {
+  up: "text-emerald-600",
+  down: "text-red-500",
+  flat: "text-amber-500",
+};
+
+const TrendIcon = ({ dir }: { dir: TrendDir }) => {
+  if (dir === "up") return <TrendingUp className="w-3.5 h-3.5" />;
+  if (dir === "down") return <TrendingDown className="w-3.5 h-3.5" />;
+  return <Minus className="w-3.5 h-3.5" />;
+};
+
 export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
-  const [bullets, setBullets] = useState<string[]>([]);
+  const [cards, setCards] = useState<InsightCard[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -71,12 +113,24 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
         const top = sorted[0];
         const bottom = sorted[sorted.length - 1];
 
-        // Bullet 1: vendor comparison
-        const b1 = sorted.length > 1 && top.platform !== bottom.platform
-          ? `${cap(top.platform)} leads availability at ${pct(top.availability_pct)}; ${cap(bottom.platform)} lags at ${pct(bottom.availability_pct)}.`
-          : `Overall availability is ${pct(top.availability_pct)} across platforms.`;
+        // Card 1: vendor comparison
+        const gap = ((top.availability_pct ?? 0) - (bottom.availability_pct ?? 0));
+        const card1: InsightCard = {
+          icon: Target,
+          headline: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${cap(top.platform)} Leads Availability`
+            : "Availability Consistent",
+          explanation: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${cap(bottom.platform)} trails at ${pct(bottom.availability_pct)}`
+            : `All platforms at ${pct(top.availability_pct)}`,
+          metric: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${pct(top.availability_pct)} vs ${pct(bottom.availability_pct)}`
+            : pct(top.availability_pct),
+          trend: gap > 0.05 ? "down" : "up",
+          tint: gap > 0.1 ? "red" : gap > 0.05 ? "amber" : "green",
+        };
 
-        // Bullet 2: trend
+        // Card 2: trend
         const weeklyAgg = new Map<string, number[]>();
         for (const r of trend) {
           if (r.week && r.availability_pct != null) {
@@ -89,20 +143,38 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
           week,
           value: vals.reduce((s, v) => s + v, 0) / vals.length,
         }));
-        const dir = trendDirection(avgByWeek);
-        const b2 = dir === "up"
-          ? "Availability has been improving over the last few weeks."
-          : dir === "down"
-            ? "Availability has been declining over the last few weeks."
-            : "Availability has remained steady over the last few weeks.";
+        const { dir, diff } = trendDirection(avgByWeek);
+        const card2: InsightCard = {
+          icon: TrendingUp,
+          headline: dir === "up" ? "Availability Improving" : dir === "down" ? "Availability Declining" : "Availability Steady",
+          explanation: dir === "up"
+            ? "Upward momentum over recent weeks"
+            : dir === "down"
+              ? "Downward drift needs attention"
+              : "Holding steady across weeks",
+          metric: pctDiff(diff) ?? "0%",
+          trend: dir,
+          tint: dir === "up" ? "green" : dir === "down" ? "red" : "amber",
+        };
 
-        // Bullet 3: action
+        // Card 3: action
         const mustHaveLow = health.find(h => (h.must_have_availability_pct ?? 1) < 0.9);
-        const b3 = mustHaveLow
-          ? `Focus on must-have products on ${cap(mustHaveLow.platform)} where gaps are largest.`
-          : "Maintain current replenishment discipline across all platforms.";
+        const card3: InsightCard = {
+          icon: mustHaveLow ? Zap : ShieldCheck,
+          headline: mustHaveLow
+            ? `Fix ${cap(mustHaveLow.platform)} Must-Haves`
+            : "Replenishment On Track",
+          explanation: mustHaveLow
+            ? `Must-have gaps at ${pct(mustHaveLow.must_have_availability_pct)}`
+            : "All must-have SKUs well stocked",
+          metric: mustHaveLow
+            ? pct(mustHaveLow.must_have_availability_pct)
+            : "✓ 90%+",
+          trend: mustHaveLow ? "down" : "up",
+          tint: mustHaveLow ? "red" : "green",
+        };
 
-        setBullets([b1, b2, b3]);
+        setCards([card1, card2, card3]);
       } else {
         const [healthRes, trendRes] = await Promise.all([
           supabase.from("sos_vendor_health_mat").select("platform, top10_presence_pct, elite_rank_share_pct, organic_share_pct"),
@@ -118,12 +190,23 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
         const top = sorted[0];
         const bottom = sorted[sorted.length - 1];
 
-        // Bullet 1: vendor comparison
-        const b1 = sorted.length > 1 && top.platform !== bottom.platform
-          ? `${cap(top.platform)} holds stronger page-1 presence at ${pct(top.top10_presence_pct)} vs ${cap(bottom.platform)} at ${pct(bottom.top10_presence_pct)}.`
-          : `Page-1 presence is ${pct(top.top10_presence_pct)} across platforms.`;
+        const gap = ((top.top10_presence_pct ?? 0) - (bottom.top10_presence_pct ?? 0));
+        const card1: InsightCard = {
+          icon: Target,
+          headline: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${cap(top.platform)} Wins Page 1`
+            : "Page 1 Presence Uniform",
+          explanation: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${cap(bottom.platform)} at ${pct(bottom.top10_presence_pct)}`
+            : `All platforms at ${pct(top.top10_presence_pct)}`,
+          metric: sorted.length > 1 && top.platform !== bottom.platform
+            ? `${pct(top.top10_presence_pct)} vs ${pct(bottom.top10_presence_pct)}`
+            : pct(top.top10_presence_pct),
+          trend: gap > 0.05 ? "down" : "up",
+          tint: gap > 0.1 ? "red" : gap > 0.05 ? "amber" : "green",
+        };
 
-        // Bullet 2: trend
+        // Card 2: trend
         const weeklyAgg = new Map<string, number[]>();
         for (const r of trend) {
           if (r.week && r.top10_presence_pct != null) {
@@ -136,42 +219,88 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
           week,
           value: vals.reduce((s, v) => s + v, 0) / vals.length,
         }));
-        const dir = trendDirection(avgByWeek);
-        const b2 = dir === "up"
-          ? "Search visibility has been trending upward recently."
-          : dir === "down"
-            ? "Search visibility has been slipping over recent weeks."
-            : "Search visibility has held steady over recent weeks.";
+        const { dir, diff } = trendDirection(avgByWeek);
+        const card2: InsightCard = {
+          icon: TrendingUp,
+          headline: dir === "up" ? "Visibility Trending Up" : dir === "down" ? "Visibility Slipping" : "Visibility Holding",
+          explanation: dir === "up"
+            ? "Search presence gaining momentum"
+            : dir === "down"
+              ? "Losing ground on key terms"
+              : "Stable search performance",
+          metric: pctDiff(diff) ?? "0%",
+          trend: dir,
+          tint: dir === "up" ? "green" : dir === "down" ? "red" : "amber",
+        };
 
-        // Bullet 3: action
+        // Card 3: action
         const lowElite = health.find(h => (h.elite_rank_share_pct ?? 1) < 0.3);
-        const b3 = lowElite
-          ? `Improve top-3 rankings on ${cap(lowElite.platform)} to increase click-through rates.`
-          : "Continue optimising keyword bids to sustain strong positions.";
+        const card3: InsightCard = {
+          icon: lowElite ? Zap : ShieldCheck,
+          headline: lowElite
+            ? `Boost ${cap(lowElite.platform)} Rankings`
+            : "Rankings Well Positioned",
+          explanation: lowElite
+            ? `Elite rank share only ${pct(lowElite.elite_rank_share_pct)}`
+            : "Strong top-3 presence maintained",
+          metric: lowElite
+            ? pct(lowElite.elite_rank_share_pct)
+            : "✓ 30%+",
+          trend: lowElite ? "down" : "up",
+          tint: lowElite ? "red" : "green",
+        };
 
-        setBullets([b1, b2, b3]);
+        setCards([card1, card2, card3]);
       }
       setLoading(false);
     }
     load();
   }, [variant]);
 
-  if (loading || bullets.length === 0) return null;
+  if (loading || cards.length === 0) return null;
 
   return (
-    <section className="bg-primary/5 border border-primary/20 rounded-xl px-5 py-4">
-      <div className="flex items-center gap-2 mb-2">
-        <Lightbulb className="w-4 h-4 text-primary" />
-        <h3 className="text-sm font-semibold text-foreground">Key Takeaways</h3>
+    <section>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {cards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={i}
+              className={cn(
+                "relative rounded-xl border px-4 py-4 flex flex-col gap-2.5 transition-shadow hover:shadow-md",
+                tintStyles[card.tint]
+              )}
+            >
+              {/* Top row: icon + headline */}
+              <div className="flex items-start gap-2.5">
+                <div className={cn("p-1.5 rounded-lg shrink-0", tintIconBg[card.tint])}>
+                  <Icon className="w-4 h-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-foreground leading-tight tracking-tight">
+                    {card.headline}
+                  </h4>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                    {card.explanation}
+                  </p>
+                </div>
+              </div>
+
+              {/* Bottom row: metric + trend */}
+              <div className="flex items-center justify-between pt-1 border-t border-foreground/5">
+                <span className="text-base font-semibold text-foreground tracking-tight">
+                  {card.metric}
+                </span>
+                <span className={cn("flex items-center gap-1 text-xs font-semibold", trendColor[card.trend])}>
+                  <TrendIcon dir={card.trend} />
+                  {card.trend === "up" ? "Improving" : card.trend === "down" ? "Declining" : "Steady"}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
-      <ul className="space-y-1.5">
-        {bullets.map((b, i) => (
-          <li key={i} className="flex items-start gap-2 text-xs text-foreground leading-snug">
-            <span className="mt-0.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            {b}
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
