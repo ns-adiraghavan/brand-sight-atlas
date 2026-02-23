@@ -182,7 +182,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       };
 
       addGap("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
-      addGap("Elite Share", "Gap in top-3 ranking share between platforms.", "elite_rank_share_pct", 5);
       setGaps(gapMetrics);
     }
 
