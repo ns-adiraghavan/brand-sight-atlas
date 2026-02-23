@@ -4,14 +4,19 @@ import { Package, Search, Store, LayoutGrid, Bell, Settings } from "lucide-react
 import { cn } from "@/lib/utils";
 import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { useDateRange } from "@/contexts/DateRangeContext";
+import { useModuleVisibility } from "@/contexts/ModuleVisibilityContext";
+import { Switch } from "@/components/ui/switch";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
-const navItems = [
+const coreNavItems = [
   { path: "/ola", label: "Online Availability", icon: Package, shortLabel: "OLA" },
   { path: "/sos", label: "Share of Search", icon: Search, shortLabel: "SoS" },
+];
+
+const comingSoonNavItems = [
   { path: "/pso", label: "Perfect Store Online", icon: Store, shortLabel: "PSO" },
   { path: "/soa", label: "Share of Assortment", icon: LayoutGrid, shortLabel: "SoA" },
 ];
@@ -19,6 +24,9 @@ const navItems = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
   const { getLabel } = useDateRange();
+  const { showComingSoon, setShowComingSoon } = useModuleVisibility();
+
+  const allNavItems = [...coreNavItems, ...(showComingSoon ? comingSoonNavItems : [])];
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -32,7 +40,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {navItems.map((item) => {
+          {allNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <NavLink
@@ -53,11 +61,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border space-y-3">
           <div className="flex items-center gap-3 px-4 py-2 text-sm text-sidebar-foreground">
             <Settings className="w-4 h-4" />
             <span>Settings</span>
           </div>
+          <label className="flex items-center justify-between px-4 py-2 cursor-pointer">
+            <span className="text-xs text-sidebar-foreground">Show coming soon</span>
+            <Switch checked={showComingSoon} onCheckedChange={setShowComingSoon} />
+          </label>
         </div>
       </aside>
 
@@ -67,7 +79,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <header className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              {navItems.find((item) => item.path === location.pathname)?.label || "Dashboard"}
+              {[...coreNavItems, ...comingSoonNavItems].find((item) => item.path === location.pathname)?.label || "Dashboard"}
             </h2>
             <p className="text-sm text-muted-foreground">Data for: {getLabel()}</p>
           </div>
