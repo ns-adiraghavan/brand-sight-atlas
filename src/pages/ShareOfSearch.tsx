@@ -11,6 +11,7 @@ import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { ExecutionDiagnostics } from "@/components/dashboard/ExecutionDiagnostics";
+import { aggregateByPlatform } from "@/lib/aggregation";
 
 interface ExecSummary {
   platform: string;
@@ -72,7 +73,7 @@ const BUCKET_COLORS: Record<string, string> = {
 };
 
 export default function ShareOfSearch() {
-  const { preset, getTimePhrase } = useDateRange();
+  const { preset, getTimePhrase, dateRange } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
   const [exec, setExec] = useState<ExecSummary[]>([]);
@@ -82,16 +83,41 @@ export default function ShareOfSearch() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      supabase.from("sos_exec_summary_mat").select("platform, top10_presence_pct, elite_rank_share_pct, exclusive_share_pct"),
-      supabase.from("sos_rank_distribution_mat").select("rank_bucket, listing_count, platform"),
-      supabase.from("sos_keyword_volatility_mat").select("search_keyword, mean_rank, rank_volatility, platform").order("rank_volatility", { ascending: false }).limit(20),
-      supabase.from("sos_keyword_risk_mat").select("search_keyword, mean_rank, performance_band, platform").limit(10),
-    ]).then(([execRes, distRes, volRes, riskRes]) => {
-      if (execRes.data) setExec(execRes.data as ExecSummary[]);
+    const fromISO = dateRange.from.toISOString();
+    const toISO = dateRange.to.toISOString();
 
+    Promise.all([
+      supabase.from("sos_exec_summary_mat")
+        .select("platform, top10_presence_pct, elite_rank_share_pct, exclusive_share_pct, week")
+        .gte("week", fromISO)
+        .lte("week", toISO),
+      supabase.from("sos_rank_distribution_mat")
+        .select("rank_bucket, listing_count, platform, week")
+        .gte("week", fromISO)
+        .lte("week", toISO),
+      supabase.from("sos_keyword_volatility_mat")
+        .select("search_keyword, mean_rank, rank_volatility, platform, week")
+        .gte("week", fromISO)
+        .lte("week", toISO)
+        .order("rank_volatility", { ascending: false })
+        .limit(200),
+      supabase.from("sos_keyword_risk_mat")
+        .select("search_keyword, mean_rank, performance_band, platform, week")
+        .gte("week", fromISO)
+        .lte("week", toISO)
+        .limit(200),
+    ]).then(([execRes, distRes, volRes, riskRes]) => {
+      // Exec summary: AVG by platform
+      if (execRes.data) {
+        const agg = aggregateByPlatform(
+          execRes.data,
+          ["top10_presence_pct", "elite_rank_share_pct", "exclusive_share_pct"]
+        );
+        setExec(agg as ExecSummary[]);
+      }
+
+      // Rank distribution: SUM listing_count by rank_bucket (across weeks + platforms)
       if (distRes.data) {
-        // Aggregate across platforms
         const bucketMap = new Map<string, number>();
         for (const row of distRes.data as RankDistRow[]) {
           if (row.rank_bucket && row.listing_count != null) {
@@ -107,12 +133,58 @@ export default function ShareOfSearch() {
         setRankDist(ordered);
       }
 
-      if (volRes.data) setVolatility(volRes.data as KeywordVolatility[]);
-      if (riskRes.data) setRisk(riskRes.data as KeywordRisk[]);
+      // Keyword volatility: aggregate by keyword+platform (AVG mean_rank, AVG rank_volatility)
+      if (volRes.data) {
+        const kwMap = new Map<string, { sum_rank: number; sum_vol: number; count: number; platform: string; search_keyword: string }>();
+        for (const row of volRes.data as any[]) {
+          const key = `${row.search_keyword}||${row.platform}`;
+          if (!kwMap.has(key)) kwMap.set(key, { sum_rank: 0, sum_vol: 0, count: 0, platform: row.platform, search_keyword: row.search_keyword });
+          const entry = kwMap.get(key)!;
+          entry.sum_rank += Number(row.mean_rank ?? 0);
+          entry.sum_vol += Number(row.rank_volatility ?? 0);
+          entry.count += 1;
+        }
+        const aggVol = Array.from(kwMap.values()).map((e) => ({
+          search_keyword: e.search_keyword,
+          mean_rank: e.sum_rank / e.count,
+          rank_volatility: e.sum_vol / e.count,
+          platform: e.platform,
+        }));
+        aggVol.sort((a, b) => b.rank_volatility - a.rank_volatility);
+        setVolatility(aggVol.slice(0, 20));
+      }
+
+      // Keyword risk: take the latest performance_band per keyword+platform (mode across weeks)
+      if (riskRes.data) {
+        const kwMap = new Map<string, { sum_rank: number; count: number; bands: string[]; platform: string; search_keyword: string }>();
+        for (const row of riskRes.data as any[]) {
+          const key = `${row.search_keyword}||${row.platform}`;
+          if (!kwMap.has(key)) kwMap.set(key, { sum_rank: 0, count: 0, bands: [], platform: row.platform, search_keyword: row.search_keyword });
+          const entry = kwMap.get(key)!;
+          entry.sum_rank += Number(row.mean_rank ?? 0);
+          entry.count += 1;
+          if (row.performance_band) entry.bands.push(row.performance_band);
+        }
+        const aggRisk = Array.from(kwMap.values()).map((e) => {
+          // Most frequent band
+          const bandCounts = new Map<string, number>();
+          for (const b of e.bands) bandCounts.set(b, (bandCounts.get(b) ?? 0) + 1);
+          let modeBand = e.bands[0] ?? "Unknown";
+          let maxCount = 0;
+          for (const [b, c] of bandCounts) { if (c > maxCount) { modeBand = b; maxCount = c; } }
+          return {
+            search_keyword: e.search_keyword,
+            mean_rank: e.sum_rank / e.count,
+            performance_band: modeBand,
+            platform: e.platform,
+          };
+        });
+        setRisk(aggRisk.slice(0, 10));
+      }
 
       setLoading(false);
     });
-  }, []);
+  }, [dateRange.from.getTime(), dateRange.to.getTime()]);
 
   // Aggregated KPIs
   const avgTop10 = exec.length > 0 ? exec.reduce((s, d) => s + d.top10_presence_pct, 0) / exec.length : null;

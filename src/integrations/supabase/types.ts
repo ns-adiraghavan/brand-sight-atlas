@@ -80,18 +80,21 @@ export type Database = {
           must_have_availability_pct: number | null
           platform: string | null
           sku_reliability_pct: number | null
+          week: string | null
         }
         Insert: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
           sku_reliability_pct?: number | null
+          week?: string | null
         }
         Update: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
           sku_reliability_pct?: number | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -179,18 +182,21 @@ export type Database = {
           location: string | null
           platform: string | null
           volatility_index: number | null
+          week: string | null
         }
         Insert: {
           avg_availability?: number | null
           location?: string | null
           platform?: string | null
           volatility_index?: number | null
+          week?: string | null
         }
         Update: {
           avg_availability?: number | null
           location?: string | null
           platform?: string | null
           volatility_index?: number | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -201,6 +207,7 @@ export type Database = {
           platform: string | null
           sku_reliability_pct: number | null
           skus_tracked: number | null
+          week: string | null
         }
         Insert: {
           availability_pct?: number | null
@@ -208,6 +215,7 @@ export type Database = {
           platform?: string | null
           sku_reliability_pct?: number | null
           skus_tracked?: number | null
+          week?: string | null
         }
         Update: {
           availability_pct?: number | null
@@ -215,6 +223,7 @@ export type Database = {
           platform?: string | null
           sku_reliability_pct?: number | null
           skus_tracked?: number | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -245,18 +254,21 @@ export type Database = {
           exclusive_share_pct: number | null
           platform: string | null
           top10_presence_pct: number | null
+          week: string | null
         }
         Insert: {
           elite_rank_share_pct?: number | null
           exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
+          week?: string | null
         }
         Update: {
           elite_rank_share_pct?: number | null
           exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -329,18 +341,21 @@ export type Database = {
           performance_band: string | null
           platform: string | null
           search_keyword: string | null
+          week: string | null
         }
         Insert: {
           mean_rank?: number | null
           performance_band?: string | null
           platform?: string | null
           search_keyword?: string | null
+          week?: string | null
         }
         Update: {
           mean_rank?: number | null
           performance_band?: string | null
           platform?: string | null
           search_keyword?: string | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -350,18 +365,21 @@ export type Database = {
           platform: string | null
           rank_volatility: number | null
           search_keyword: string | null
+          week: string | null
         }
         Insert: {
           mean_rank?: number | null
           platform?: string | null
           rank_volatility?: number | null
           search_keyword?: string | null
+          week?: string | null
         }
         Update: {
           mean_rank?: number | null
           platform?: string | null
           rank_volatility?: number | null
           search_keyword?: string | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -370,16 +388,19 @@ export type Database = {
           listing_count: number | null
           platform: string | null
           rank_bucket: string | null
+          week: string | null
         }
         Insert: {
           listing_count?: number | null
           platform?: string | null
           rank_bucket?: string | null
+          week?: string | null
         }
         Update: {
           listing_count?: number | null
           platform?: string | null
           rank_bucket?: string | null
+          week?: string | null
         }
         Relationships: []
       }
@@ -391,6 +412,7 @@ export type Database = {
           organic_share_pct: number | null
           platform: string | null
           top10_presence_pct: number | null
+          week: string | null
         }
         Insert: {
           avg_rank_volatility?: number | null
@@ -399,6 +421,7 @@ export type Database = {
           organic_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
+          week?: string | null
         }
         Update: {
           avg_rank_volatility?: number | null
@@ -407,6 +430,7 @@ export type Database = {
           organic_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
+          week?: string | null
         }
         Relationships: []
       }

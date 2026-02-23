@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
+import { useDateRange } from "@/contexts/DateRangeContext";
+import { aggregateByPlatform } from "@/lib/aggregation";
 
 interface OlaVendorRow {
   platform: string;
@@ -104,19 +106,29 @@ interface VendorHealthOverviewProps {
 export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { dateRange } = useDateRange();
 
   const metrics = variant === "ola" ? OLA_METRICS : SOS_METRICS;
   const viewName = variant === "ola" ? "ola_vendor_health_mat" : "sos_vendor_health_mat";
+  const numericKeys = variant === "ola"
+    ? ["skus_tracked", "availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
+    : ["keywords_tracked", "top10_presence_pct", "elite_rank_share_pct", "organic_share_pct", "avg_rank_volatility"];
 
   useEffect(() => {
     supabase
       .from(viewName)
       .select("*")
+      .gte("week", dateRange.from.toISOString())
+      .lte("week", dateRange.to.toISOString())
       .then(({ data }) => {
-        if (data) setRows(data.filter((r: any) => r.platform));
+        if (data) {
+          const filtered = data.filter((r: any) => r.platform);
+          const aggregated = aggregateByPlatform(filtered, numericKeys);
+          setRows(aggregated);
+        }
         setLoading(false);
       });
-  }, [viewName]);
+  }, [viewName, dateRange.from.getTime(), dateRange.to.getTime()]);
 
   const platforms = rows.map((r: any) => r.platform as string);
 
