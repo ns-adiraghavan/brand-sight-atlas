@@ -12,41 +12,45 @@ import { AlignmentInsight } from "@/components/dashboard/AlignmentInsight";
 import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
+import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
 import { supabase } from "@/integrations/supabase/client";
-import { aggregateOlaHealth, type OlaHealthAggregated } from "@/lib/aggregation";
+
+interface ExecRow {
+  platform: string;
+  availability_pct: number | null;
+  must_have_availability_pct: number | null;
+  sku_reliability_pct: number | null;
+}
 
 export default function OnlineAvailability() {
-  const { preset, getTimePhrase, dateRange } = useDateRange();
+  const { preset } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
-  const [execData, setExecData] = useState<OlaHealthAggregated[]>([]);
+  const [execData, setExecData] = useState<ExecRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase
-      .from("ola_vendor_health_mat")
-      .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
-      .gte("week", dateRange.from.toISOString())
-      .lte("week", dateRange.to.toISOString())
+      .from("ola_exec_summary")
+      .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
       .then(({ data: rows }) => {
         if (rows) {
-          const filtered = rows.filter((r) => r.platform && r.total_skus != null);
-          setExecData(aggregateOlaHealth(filtered as any));
+          setExecData(rows.filter((r) => r.platform) as ExecRow[]);
         }
         setLoading(false);
       });
-  }, [dateRange.from.getTime(), dateRange.to.getTime()]);
+  }, []);
 
-  // Aggregate across platforms (weighted: sum all counts then divide)
-  const totalAvailAll = execData.reduce((s, d) => s + (d.availability_pct != null ? d.availability_pct * d.skus_tracked : 0), 0);
-  const totalSkusAll = execData.reduce((s, d) => s + d.skus_tracked, 0);
-  const avgAvailability = totalSkusAll > 0 ? totalAvailAll / totalSkusAll : null;
-
-  const totalMHAll = execData.reduce((s, d) => s + (d.must_have_availability_pct != null ? d.must_have_availability_pct * d.skus_tracked : 0), 0);
-  const avgMustHave = totalSkusAll > 0 ? totalMHAll / totalSkusAll : null;
-
-  // sku_reliability_pct not available from count columns — omit
-  const avgReliability: number | null = null;
+  // Simple average across platforms for headline KPIs
+  const avgAvailability = execData.length > 0
+    ? execData.reduce((s, d) => s + (d.availability_pct ?? 0), 0) / execData.length
+    : null;
+  const avgMustHave = execData.length > 0
+    ? execData.reduce((s, d) => s + (d.must_have_availability_pct ?? 0), 0) / execData.length
+    : null;
+  const avgReliability = execData.length > 0
+    ? execData.reduce((s, d) => s + (d.sku_reliability_pct ?? 0), 0) / execData.length
+    : null;
 
   const MUST_HAVE_TARGET = 0.9;
   const mustHaveDeltaPP = avgMustHave != null ? ((avgMustHave - MUST_HAVE_TARGET) * 100) : null;
@@ -63,42 +67,30 @@ export default function OnlineAvailability() {
   const mustHaveBand = getPerformanceBand(avgMustHave);
   const reliabilityBand = getPerformanceBand(avgReliability);
 
-  // Build structured 4-part insight
+  // Build structured insight
   const platformsSorted = [...execData].sort((a, b) => (b.availability_pct ?? 0) - (a.availability_pct ?? 0));
   const topPlatform = platformsSorted[0];
   const bottomPlatform = platformsSorted[platformsSorted.length - 1];
   const vendorGapPP = topPlatform && bottomPlatform
-    ? ((topPlatform.availability_pct - bottomPlatform.availability_pct) * 100).toFixed(1)
+    ? (((topPlatform.availability_pct ?? 0) - (bottomPlatform.availability_pct ?? 0)) * 100).toFixed(1)
     : null;
 
   const insightLines: string[] = [];
-
-  // 1. Metric change
   if (avgAvailability != null) {
-    insightLines.push(
-      `Availability stands at ${(avgAvailability * 100).toFixed(1)}% over the last 30 days.`
-    );
+    insightLines.push(`Availability stands at ${(avgAvailability * 100).toFixed(1)}%.`);
   }
-
-  // 2. Vendor comparison
   if (vendorGapPP && topPlatform && bottomPlatform && Number(vendorGapPP) > 0) {
     insightLines.push(
       `${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)} trails ${topPlatform.platform.charAt(0).toUpperCase() + topPlatform.platform.slice(1)} by ${vendorGapPP}pp.`
     );
   }
-
-  // 3. Interpretation
   if (vendorGapPP && Number(vendorGapPP) > 2) {
-    insightLines.push(
-      "This gap suggests platform-specific listing or replenishment issues."
-    );
+    insightLines.push("This gap suggests platform-specific listing or replenishment issues.");
   } else if (mustHaveDeltaPP != null && mustHaveDeltaPP < 0) {
     insightLines.push(
       `Must-have products miss the 90% target by ${Math.abs(mustHaveDeltaPP).toFixed(1)}pp, indicating frequent out-of-stock days.`
     );
   }
-
-  // 4. Action
   if (bottomPlatform) {
     insightLines.push(
       `Prioritize must-have SKUs with availability below 70% on ${bottomPlatform.platform.charAt(0).toUpperCase() + bottomPlatform.platform.slice(1)}.`
@@ -108,22 +100,16 @@ export default function OnlineAvailability() {
   return (
     <DashboardLayout>
       <div className="space-y-4">
-
-        {/* ===== KEY TAKEAWAYS ===== */}
         <KeyTakeaways variant="ola" />
-
-        {/* ===== SECTION 0: VENDOR HEALTH ===== */}
         <VendorHealthOverview variant="ola" />
 
-        {/* ===== SECTION 1: EXECUTIVE SNAPSHOT ===== */}
+        {/* Executive Snapshot */}
         <section>
           <SectionHeader
             title="Executive Snapshot"
             subtitle="Key availability metrics at a glance"
             action={<DataStatusIndicator status={dataStatus} />}
           />
-
-          {/* Insight paragraph — 30% shorter */}
           {insightLines.length > 0 && (
             <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5 mb-5 space-y-1">
               {insightLines.map((line, i) => (
@@ -131,14 +117,11 @@ export default function OnlineAvailability() {
               ))}
             </div>
           )}
-
-          {/* KPI row from ola_exec_summary */}
           <div className="bg-card rounded-xl border border-border p-6">
             {loading ? (
               <p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
             ) : (
               <div className="grid grid-cols-4 gap-6">
-                {/* Overall Availability — PRIMARY (largest) */}
                 <div className={`text-center border-r border-border pr-6 rounded-lg py-3 ${availBand.bg}`}>
                   <p className="text-5xl font-extrabold tracking-tight text-foreground">
                     {avgAvailability != null ? `${(avgAvailability * 100).toFixed(1)}%` : "—"}
@@ -148,8 +131,6 @@ export default function OnlineAvailability() {
                     {availBand.icon}{availBand.label}
                   </span>
                 </div>
-
-                {/* Must-Have Availability — SECONDARY + delta */}
                 <div className={`flex flex-col justify-center rounded-lg p-3 ${mustHaveBand.bg}`}>
                   <div className="flex items-center gap-2 mb-1">
                     {mustHaveBand.icon || <AlertTriangle className={`w-4 h-4 ${mustHaveBand.color}`} />}
@@ -167,8 +148,6 @@ export default function OnlineAvailability() {
                     {mustHaveBand.label}
                   </span>
                 </div>
-
-                {/* SKU Reliability — SECONDARY + Critical highlight */}
                 <div className={`flex flex-col justify-center rounded-lg p-3 ${reliabilityBand.bg}`}>
                   <div className="flex items-center gap-2 mb-1">
                     {reliabilityBand.icon || <Shield className={`w-4 h-4 ${reliabilityBand.color}`} />}
@@ -182,8 +161,6 @@ export default function OnlineAvailability() {
                     {reliabilityBand.label}
                   </span>
                 </div>
-
-                {/* Per-platform breakdown */}
                 <div className="flex flex-col justify-center">
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">By Platform</span>
                   <div className="space-y-1.5">
@@ -193,7 +170,7 @@ export default function OnlineAvailability() {
                         <div key={p.platform} className="flex items-center justify-between text-xs">
                           <span className="text-muted-foreground capitalize">{p.platform}</span>
                           <span className={`font-semibold ${band.color}`}>
-                            {(p.availability_pct * 100).toFixed(1)}%
+                            {p.availability_pct != null ? `${(p.availability_pct * 100).toFixed(1)}%` : "—"}
                           </span>
                         </div>
                       );
@@ -205,19 +182,20 @@ export default function OnlineAvailability() {
           </div>
         </section>
 
-        {/* ===== SECTION 2: STRUCTURAL TRENDS ===== */}
+        {/* Structural Trends — date filter applies ONLY here */}
         <section>
-          <SectionHeader
-            title="Structural Trends"
-            subtitle="Temporal patterns and platform comparison"
-          />
+          <div className="flex items-center justify-between mb-2">
+            <SectionHeader
+              title="Structural Trends"
+              subtitle="Temporal patterns and platform comparison"
+            />
+            <DateRangeFilter />
+          </div>
           <AvailabilityTrendChart />
         </section>
 
-        {/* ===== SECTION 3: EXECUTION DIAGNOSTICS ===== */}
         <ExecutionDiagnostics variant="ola" />
 
-        {/* ===== SECTION 3b: OPERATIONAL DEEP DIVE ===== */}
         <section>
           <SectionHeader
             title="Operational Deep Dive"
@@ -233,7 +211,6 @@ export default function OnlineAvailability() {
           </div>
         </section>
 
-        {/* ===== SECTION 4: ALIGNMENT ===== */}
         <section>
           <AlignmentInsight />
         </section>

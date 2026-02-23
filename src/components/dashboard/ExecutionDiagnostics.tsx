@@ -1,14 +1,23 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useDateRange } from "@/contexts/DateRangeContext";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { ArrowRight, Database, MapPin, Calendar, BarChart3 } from "lucide-react";
-import { aggregateOlaHealth, aggregateSosHealth } from "@/lib/aggregation";
 
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+interface OlaVendorRow {
+  platform: string;
+  skus_tracked: number;
+  availability_pct: number | null;
+  must_have_availability_pct: number | null;
+  sku_reliability_pct: number | null;
+}
+
+interface SosVendorRow {
+  platform: string;
+  keywords_tracked: number;
+  top10_presence_pct: number | null;
+  elite_rank_share_pct: number | null;
+}
 
 interface VendorGap {
   metric: string;
@@ -34,10 +43,6 @@ interface ExecutionDiagnosticsProps {
   variant: "ola" | "sos";
 }
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
 function gapStatus(gapPP: number, thresholdPP: number): "success" | "warning" | "danger" {
   if (gapPP <= thresholdPP * 0.5) return "success";
   if (gapPP <= thresholdPP) return "warning";
@@ -54,17 +59,12 @@ function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
-
 export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   const [gaps, setGaps] = useState<VendorGap[]>([]);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [coverage, setCoverage] = useState<CoverageRow[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const { dateRange } = useDateRange();
 
   useEffect(() => {
     if (variant === "ola") {
@@ -72,35 +72,22 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     } else {
       loadSos();
     }
-  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
+  }, [variant]);
 
-  /* ---- OLA loader ---- */
   async function loadOla() {
-    const fromISO = dateRange.from.toISOString();
-    const toISO = dateRange.to.toISOString();
-
-    const [vendorRes, catRes, pinRes, weekRes] = await Promise.all([
-      supabase.from("ola_vendor_health_mat").select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
+    const [vendorRes, catRes, pinRes] = await Promise.all([
+      supabase.from("ola_vendor_health").select("platform, skus_tracked, availability_pct, must_have_availability_pct"),
       supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
-      supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
-      supabase.from("ola_weekly_trend_mat").select("platform, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
+      supabase.from("ola_pincode_volatility").select("platform, location, avg_availability, volatility_index"),
     ]);
 
-    // Weighted aggregation from counts
-    const vendorsRaw = (vendorRes.data ?? []).filter((r: any) => r.platform);
-    const vendors = aggregateOlaHealth(vendorsRaw as any);
+    const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
     // Vendor gaps
     if (plats.length === 2) {
-      const [a, b] = vendors;
+      const [a, b] = vendors as any[];
       const gapMetrics: VendorGap[] = [];
 
       const addGap = (label: string, tooltip: string, key: string, thresholdPP: number) => {
@@ -120,11 +107,10 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
       addGap("Availability", "Overall availability % gap between platforms.", "availability_pct", 5);
       addGap("Must-Have Avail", "Gap in must-have SKU availability between platforms.", "must_have_availability_pct", 5);
-
       setGaps(gapMetrics);
     }
 
-    // Category health (no week column — kept as-is)
+    // Category health
     const catData = (catRes.data ?? []) as any[];
     const catMap = new Map<string, Record<string, number | null>>();
     for (const row of catData) {
@@ -141,7 +127,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       });
     setCategories(catRows);
 
-    // Coverage — pincode locations (aggregate unique locations from filtered data)
+    // Coverage
     const locByPlatform = new Map<string, Set<string>>();
     for (const row of (pinRes.data ?? []) as any[]) {
       const p = row.platform as string;
@@ -149,63 +135,38 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       locByPlatform.get(p)!.add(row.location as string);
     }
 
-    const weeksByPlatform = new Map<string, Set<string>>();
-    for (const row of (weekRes.data ?? []) as any[]) {
-      const p = row.platform as string;
-      if (!weeksByPlatform.has(p)) weeksByPlatform.set(p, new Set());
-      weeksByPlatform.get(p)!.add(row.week as string);
-    }
-
     const coverageRows: CoverageRow[] = [
       {
         label: "SKUs Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, Math.round(vendors.find((v: any) => v.platform === p)?.skus_tracked ?? 0).toLocaleString()])),
+        platforms: Object.fromEntries(plats.map((p) => [p, Math.round((vendors.find((v: any) => v.platform === p) as any)?.skus_tracked ?? 0).toLocaleString()])),
       },
       {
         label: "Locations",
         icon: <MapPin className="w-3.5 h-3.5 text-muted-foreground" />,
         platforms: Object.fromEntries(plats.map((p) => [p, (locByPlatform.get(p)?.size ?? 0).toLocaleString()])),
       },
-      {
-        label: "Weeks of Data",
-        icon: <Calendar className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, (weeksByPlatform.get(p)?.size ?? 0).toLocaleString()])),
-      },
     ];
     setCoverage(coverageRows);
     setLoading(false);
   }
 
-  /* ---- SoS loader ---- */
   async function loadSos() {
-    const fromISO = dateRange.from.toISOString();
-    const toISO = dateRange.to.toISOString();
-
-    const [vendorRes, riskRes, weekRes] = await Promise.all([
-      supabase.from("sos_vendor_health_mat").select("platform, top10_keywords, elite_keywords, total_keywords, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
-      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
-      supabase.from("sos_weekly_trend_mat").select("platform, week")
-        .gte("week", fromISO)
-        .lte("week", toISO),
+    const [vendorRes, riskRes] = await Promise.all([
+      supabase.from("sos_vendor_health").select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct"),
+      supabase.from("sos_keyword_risk").select("search_keyword, performance_band, platform"),
     ]);
 
-    // Weighted aggregation from counts
-    const vendorsRaw = (vendorRes.data ?? []).filter((r: any) => r.platform);
-    const vendors = aggregateSosHealth(vendorsRaw as any);
+    const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
     // Vendor gaps
     if (plats.length === 2) {
-      const [a, b] = vendors;
+      const [a, b] = vendors as any[];
       const gapMetrics: VendorGap[] = [];
 
-      const addGap = (label: string, tooltip: string, key: string, thresholdPP: number, isInverse = false) => {
+      const addGap = (label: string, tooltip: string, key: string, thresholdPP: number) => {
         const va = (a[key] ?? 0) as number;
         const vb = (b[key] ?? 0) as number;
         const gapVal = Math.abs(va - vb);
@@ -223,30 +184,17 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
       addGap("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
       addGap("Elite Share", "Gap in top-3 ranking share between platforms.", "elite_rank_share_pct", 5);
-
       setGaps(gapMetrics);
     }
 
-    // Category = performance band distribution per platform (aggregate across weeks — mode per keyword)
+    // Keyword risk bands
     const riskData = (riskRes.data ?? []) as any[];
-    // First aggregate by keyword+platform to get a single band per keyword
-    const kwBandMap = new Map<string, { bands: string[]; platform: string }>();
-    for (const row of riskData) {
-      const key = `${row.search_keyword}||${row.platform}`;
-      if (!kwBandMap.has(key)) kwBandMap.set(key, { bands: [], platform: row.platform });
-      if (row.performance_band) kwBandMap.get(key)!.bands.push(row.performance_band);
-    }
-    // Then count bands per platform
     const bandMap = new Map<string, Record<string, number>>();
-    for (const entry of kwBandMap.values()) {
-      // Mode band
-      const bandCounts = new Map<string, number>();
-      for (const b of entry.bands) bandCounts.set(b, (bandCounts.get(b) ?? 0) + 1);
-      let modeBand = entry.bands[0] ?? "Unknown";
-      let maxCount = 0;
-      for (const [b, c] of bandCounts) { if (c > maxCount) { modeBand = b; maxCount = c; } }
-      if (!bandMap.has(modeBand)) bandMap.set(modeBand, {});
-      bandMap.get(modeBand)![entry.platform] = (bandMap.get(modeBand)![entry.platform] ?? 0) + 1;
+    for (const row of riskData) {
+      const band = row.performance_band as string;
+      if (!band) continue;
+      if (!bandMap.has(band)) bandMap.set(band, {});
+      bandMap.get(band)![row.platform as string] = (bandMap.get(band)![row.platform as string] ?? 0) + 1;
     }
     const bandOrder = ["Elite", "Strong", "Moderate", "Weak"];
     const catRows: CategoryRow[] = bandOrder
@@ -258,30 +206,17 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     setCategories(catRows);
 
     // Coverage
-    const weeksByPlatform = new Map<string, Set<string>>();
-    for (const row of (weekRes.data ?? []) as any[]) {
-      const p = row.platform as string;
-      if (!weeksByPlatform.has(p)) weeksByPlatform.set(p, new Set());
-      weeksByPlatform.get(p)!.add(row.week as string);
-    }
-
     const coverageRows: CoverageRow[] = [
       {
         label: "Keywords Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, Math.round(vendors.find((v: any) => v.platform === p)?.keywords_tracked ?? 0).toLocaleString()])),
-      },
-      {
-        label: "Weeks of Data",
-        icon: <Calendar className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, (weeksByPlatform.get(p)?.size ?? 0).toLocaleString()])),
+        platforms: Object.fromEntries(plats.map((p) => [p, Math.round((vendors.find((v: any) => v.platform === p) as any)?.keywords_tracked ?? 0).toLocaleString()])),
       },
     ];
     setCoverage(coverageRows);
     setLoading(false);
   }
 
-  /* ---- Render ---- */
   const categoryLabel = variant === "ola" ? "Category Availability" : "Keyword Performance Bands";
   const categoryTooltip = variant === "ola"
     ? "Availability % by business group per platform. Sorted by weakest first."
@@ -306,22 +241,19 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
         title="Execution Diagnostics"
         subtitle="Structural execution insights across platforms"
       />
-
       {loading ? (
         <div className="bg-card rounded-xl border border-border p-6">
           <p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
         </div>
       ) : (
         <div className="grid grid-cols-3 gap-3">
-
-          {/* ---- Panel 1: Vendor Performance Gaps ---- */}
+          {/* Panel 1: Performance Gaps */}
           <div className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
               <h4 className="text-sm font-semibold text-foreground">Performance Gaps</h4>
               <MetricTooltip definition="Difference in key metrics between platforms. Green = aligned, amber = diverging, red = significant gap." />
             </div>
-
             <div className="space-y-3">
               {gaps.map((g) => (
                 <div key={g.metric} className="space-y-1.5">
@@ -352,15 +284,13 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
             </div>
           </div>
 
-          {/* ---- Panel 2: Category Comparison ---- */}
+          {/* Panel 2: Category Comparison */}
           <div className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center gap-2 mb-4">
               <BarChart3 className="w-4 h-4 text-muted-foreground" />
               <h4 className="text-sm font-semibold text-foreground">{categoryLabel}</h4>
               <MetricTooltip definition={categoryTooltip} />
             </div>
-
-            {/* Header */}
             <div className="grid gap-2 mb-2" style={{ gridTemplateColumns: `1fr ${platforms.map(() => "80px").join(" ")}` }}>
               <span className="text-[10px] text-muted-foreground uppercase">
                 {variant === "ola" ? "Category" : "Band"}
@@ -371,7 +301,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
                 </span>
               ))}
             </div>
-
             <div className="space-y-1">
               {categories.map((row) => (
                 <div
@@ -395,14 +324,13 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
             </div>
           </div>
 
-          {/* ---- Panel 3: Data Coverage ---- */}
+          {/* Panel 3: Data Coverage */}
           <div className="bg-card rounded-xl border border-border p-5">
             <div className="flex items-center gap-2 mb-4">
               <Database className="w-4 h-4 text-muted-foreground" />
               <h4 className="text-sm font-semibold text-foreground">Data Coverage</h4>
               <MetricTooltip definition="Tracking breadth per platform. Uneven coverage may affect metric comparability." />
             </div>
-
             <div className="space-y-3">
               {coverage.map((row) => (
                 <div key={row.label} className="space-y-1.5">
@@ -424,24 +352,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
                   </div>
                 </div>
               ))}
-
-              {/* Coverage imbalance callout */}
-              {platforms.length === 2 && coverage.length > 0 && (() => {
-                const first = coverage[0];
-                const v0 = parseInt(first.platforms[platforms[0]]?.replace(/,/g, "") ?? "0");
-                const v1 = parseInt(first.platforms[platforms[1]]?.replace(/,/g, "") ?? "0");
-                const ratio = v0 > 0 && v1 > 0 ? Math.max(v0, v1) / Math.min(v0, v1) : 1;
-                if (ratio > 1.5) {
-                  return (
-                    <div className="mt-2 px-3 py-2 rounded-lg bg-status-warning/10 border border-status-warning/20">
-                      <p className="text-[10px] text-status-warning leading-snug">
-                        Coverage imbalance detected — {capitalize(platforms[0])} tracks {first.platforms[platforms[0]]} {first.label.toLowerCase()} vs {first.platforms[platforms[1]]} on {capitalize(platforms[1])}. Cross-platform comparisons may not be fully representative.
-                      </p>
-                    </div>
-                  );
-                }
-                return null;
-              })()}
             </div>
           </div>
         </div>

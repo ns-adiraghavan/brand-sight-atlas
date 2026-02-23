@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Package, Search, Store, LayoutGrid, Bell, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DateRangeFilter } from "@/components/dashboard/DateRangeFilter";
-import { useDateRange } from "@/contexts/DateRangeContext";
+
+
 import { useModuleVisibility } from "@/contexts/ModuleVisibilityContext";
 import { Switch } from "@/components/ui/switch";
 
@@ -23,7 +23,7 @@ const comingSoonNavItems = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const location = useLocation();
-  const { getLabel } = useDateRange();
+  
   const { showComingSoon, setShowComingSoon } = useModuleVisibility();
 
   const allNavItems = [...coreNavItems, ...(showComingSoon ? comingSoonNavItems : [])];
@@ -81,10 +81,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             <h2 className="text-lg font-semibold text-foreground">
               {[...coreNavItems, ...comingSoonNavItems].find((item) => item.path === location.pathname)?.label || "Dashboard"}
             </h2>
-            <p className="text-sm text-muted-foreground">Data for: {getLabel()}</p>
+            <p className="text-sm text-muted-foreground">FMCG Analytics Dashboard</p>
           </div>
           <div className="flex items-center gap-3">
-            <DateRangeFilter />
             <button className="relative p-2 rounded-lg hover:bg-secondary transition-colors">
               <Bell className="w-5 h-5 text-muted-foreground" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-status-error rounded-full" />

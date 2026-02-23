@@ -2,14 +2,13 @@ import { useEffect, useState } from "react";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
-import { useDateRange } from "@/contexts/DateRangeContext";
-import { aggregateOlaHealth, aggregateSosHealth } from "@/lib/aggregation";
 
 interface OlaVendorRow {
   platform: string;
   skus_tracked: number;
   availability_pct: number | null;
   must_have_availability_pct: number | null;
+  sku_reliability_pct: number | null;
 }
 
 interface SosVendorRow {
@@ -82,55 +81,39 @@ interface VendorHealthOverviewProps {
 export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { dateRange } = useDateRange();
 
   const metrics = variant === "ola" ? OLA_METRICS : SOS_METRICS;
 
   useEffect(() => {
-    const fromISO = dateRange.from.toISOString();
-    const toISO = dateRange.to.toISOString();
-
     if (variant === "ola") {
       supabase
-        .from("ola_vendor_health_mat")
-        .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
-        .gte("week", fromISO)
-        .lte("week", toISO)
+        .from("ola_vendor_health")
+        .select("platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct")
         .then(({ data }) => {
-          if (data) {
-            const filtered = data.filter((r: any) => r.platform);
-            setRows(aggregateOlaHealth(filtered as any));
-          }
+          if (data) setRows(data.filter((r: any) => r.platform));
           setLoading(false);
         });
     } else {
       supabase
-        .from("sos_vendor_health_mat")
-        .select("platform, top10_keywords, elite_keywords, total_keywords, week")
-        .gte("week", fromISO)
-        .lte("week", toISO)
+        .from("sos_vendor_health")
+        .select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct")
         .then(({ data }) => {
-          if (data) {
-            const filtered = data.filter((r: any) => r.platform);
-            setRows(aggregateSosHealth(filtered as any));
-          }
+          if (data) setRows(data.filter((r: any) => r.platform));
           setLoading(false);
         });
     }
-  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
+  }, [variant]);
 
   const platforms = rows.map((r: any) => r.platform as string);
 
-  // Compute gap between platforms for each metric (only when 2 platforms)
   const computeGap = (metric: MetricDef): { value: number; color: string } | null => {
     if (platforms.length !== 2) return null;
     const v0 = metric.getValue(rows[0]);
     const v1 = metric.getValue(rows[1]);
     if (v0 == null || v1 == null) return null;
     const gap = Math.abs(v0 - v1);
-    // Color: green if gap is small, amber if moderate, red if large
     const isPercentage = metric.format(0.5).includes("%");
-    const threshold = isPercentage ? 0.05 : (metric.label === "Rank Volatility" ? 2 : 50);
+    const threshold = isPercentage ? 0.05 : 50;
     const color = gap <= threshold * 0.5
       ? "text-status-success"
       : gap <= threshold
@@ -145,7 +128,6 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
         title="Vendor Health Overview"
         subtitle="Cross-platform tracking coverage and headline performance"
       />
-
       <div className="bg-card rounded-xl border border-border p-5">
         {loading ? (
           <p className="text-sm text-muted-foreground text-center py-4">Loading…</p>
@@ -153,9 +135,8 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
           <p className="text-sm text-muted-foreground text-center py-4">No vendor data available</p>
         ) : (
           <>
-            {/* Header row */}
             <div className="grid gap-3" style={{ gridTemplateColumns: `140px repeat(${platforms.length}, 1fr)${platforms.length === 2 ? " 100px" : ""}` }}>
-              <div /> {/* spacer */}
+              <div />
               {platforms.map((p) => (
                 <p key={p} className="text-xs text-muted-foreground uppercase tracking-wide font-medium text-center capitalize">{p}</p>
               ))}
@@ -163,8 +144,6 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
                 <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium text-center">Gap</p>
               )}
             </div>
-
-            {/* Metric rows */}
             <div className="mt-2 space-y-1">
               {metrics.map((metric) => {
                 const gap = computeGap(metric);
@@ -174,13 +153,10 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
                     className="grid gap-3 items-center py-2.5 border-b border-border/30 last:border-b-0"
                     style={{ gridTemplateColumns: `140px repeat(${platforms.length}, 1fr)${platforms.length === 2 ? " 100px" : ""}` }}
                   >
-                    {/* Metric label + tooltip */}
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-medium text-foreground">{metric.label}</span>
                       <MetricTooltip definition={metric.tooltip} />
                     </div>
-
-                    {/* Per-platform values */}
                     {rows.map((row: any) => {
                       const val = metric.getValue(row);
                       return (
@@ -189,16 +165,12 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
                         </p>
                       );
                     })}
-
-                    {/* Gap column */}
                     {platforms.length === 2 && (
                       <p className={`text-sm font-semibold text-center ${gap?.color ?? "text-muted-foreground"}`}>
                         {gap != null ? (
                           metric.label.includes("Tracked")
                             ? gap.value.toLocaleString()
-                            : metric.label.includes("Volatility")
-                              ? gap.value.toFixed(2)
-                              : `${(gap.value * 100).toFixed(1)}pp`
+                            : `${(gap.value * 100).toFixed(1)}pp`
                         ) : "—"}
                       </p>
                     )}
@@ -206,7 +178,6 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
                 );
               })}
             </div>
-
             <p className="text-[10px] text-muted-foreground italic mt-3">
               Vendor comparisons normalized by tracked SKU/keyword coverage.
             </p>
