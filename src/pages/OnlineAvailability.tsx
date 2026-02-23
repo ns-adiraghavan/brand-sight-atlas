@@ -13,56 +13,40 @@ import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { supabase } from "@/integrations/supabase/client";
-import { aggregateByPlatform } from "@/lib/aggregation";
-
-interface ExecSummary {
-  platform: string;
-  availability_pct: number;
-  must_have_availability_pct: number;
-  sku_reliability_pct: number;
-}
+import { aggregateOlaHealth, type OlaHealthAggregated } from "@/lib/aggregation";
 
 export default function OnlineAvailability() {
   const { preset, getTimePhrase, dateRange } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
-  const [execData, setExecData] = useState<ExecSummary[]>([]);
+  const [execData, setExecData] = useState<OlaHealthAggregated[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase
-      .from("ola_exec_summary_mat")
-      .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
+      .from("ola_vendor_health_mat")
+      .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
       .gte("week", dateRange.from.toISOString())
       .lte("week", dateRange.to.toISOString())
       .then(({ data: rows }) => {
         if (rows) {
-          const filtered = rows.filter(
-            (r) => r.platform && r.availability_pct != null
-          );
-          const aggregated = aggregateByPlatform(
-            filtered,
-            ["availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
-          );
-          setExecData(aggregated as ExecSummary[]);
+          const filtered = rows.filter((r) => r.platform && r.total_skus != null);
+          setExecData(aggregateOlaHealth(filtered as any));
         }
         setLoading(false);
       });
   }, [dateRange.from.getTime(), dateRange.to.getTime()]);
 
-  // Aggregate across platforms
-  const avgAvailability =
-    execData.length > 0
-      ? execData.reduce((s, d) => s + (d.availability_pct ?? 0), 0) / execData.length
-      : null;
-  const avgMustHave =
-    execData.length > 0
-      ? execData.reduce((s, d) => s + (d.must_have_availability_pct ?? 0), 0) / execData.length
-      : null;
-  const avgReliability =
-    execData.length > 0
-      ? execData.reduce((s, d) => s + (d.sku_reliability_pct ?? 0), 0) / execData.length
-      : null;
+  // Aggregate across platforms (weighted: sum all counts then divide)
+  const totalAvailAll = execData.reduce((s, d) => s + (d.availability_pct != null ? d.availability_pct * d.skus_tracked : 0), 0);
+  const totalSkusAll = execData.reduce((s, d) => s + d.skus_tracked, 0);
+  const avgAvailability = totalSkusAll > 0 ? totalAvailAll / totalSkusAll : null;
+
+  const totalMHAll = execData.reduce((s, d) => s + (d.must_have_availability_pct != null ? d.must_have_availability_pct * d.skus_tracked : 0), 0);
+  const avgMustHave = totalSkusAll > 0 ? totalMHAll / totalSkusAll : null;
+
+  // sku_reliability_pct not available from count columns — omit
+  const avgReliability: number | null = null;
 
   const MUST_HAVE_TARGET = 0.9;
   const mustHaveDeltaPP = avgMustHave != null ? ((avgMustHave - MUST_HAVE_TARGET) * 100) : null;

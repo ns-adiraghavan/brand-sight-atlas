@@ -4,7 +4,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { ArrowRight, Database, MapPin, Calendar, BarChart3 } from "lucide-react";
-import { aggregateByPlatform } from "@/lib/aggregation";
+import { aggregateOlaHealth, aggregateSosHealth } from "@/lib/aggregation";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -80,7 +80,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     const toISO = dateRange.to.toISOString();
 
     const [vendorRes, catRes, pinRes, weekRes] = await Promise.all([
-      supabase.from("ola_vendor_health_mat").select("*")
+      supabase.from("ola_vendor_health_mat").select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
         .gte("week", fromISO)
         .lte("week", toISO),
       supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
@@ -92,12 +92,9 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
         .lte("week", toISO),
     ]);
 
-    // Aggregate vendor health by platform
-    const vendorsRaw = (vendorRes.data ?? []) as any[];
-    const vendors = aggregateByPlatform(
-      vendorsRaw,
-      ["availability_pct", "must_have_availability_pct", "sku_reliability_pct", "skus_tracked"]
-    );
+    // Weighted aggregation from counts
+    const vendorsRaw = (vendorRes.data ?? []).filter((r: any) => r.platform);
+    const vendors = aggregateOlaHealth(vendorsRaw as any);
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
@@ -123,7 +120,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
       addGap("Availability", "Overall availability % gap between platforms.", "availability_pct", 5);
       addGap("Must-Have Avail", "Gap in must-have SKU availability between platforms.", "must_have_availability_pct", 5);
-      addGap("SKU Consistency", "Gap in long-term stock consistency between platforms.", "sku_reliability_pct", 10);
 
       setGaps(gapMetrics);
     }
@@ -187,7 +183,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     const toISO = dateRange.to.toISOString();
 
     const [vendorRes, riskRes, weekRes] = await Promise.all([
-      supabase.from("sos_vendor_health_mat").select("*")
+      supabase.from("sos_vendor_health_mat").select("platform, top10_keywords, elite_keywords, total_keywords, week")
         .gte("week", fromISO)
         .lte("week", toISO),
       supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform, week")
@@ -198,12 +194,9 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
         .lte("week", toISO),
     ]);
 
-    // Aggregate vendor health by platform
-    const vendorsRaw = (vendorRes.data ?? []) as any[];
-    const vendors = aggregateByPlatform(
-      vendorsRaw,
-      ["top10_presence_pct", "elite_rank_share_pct", "avg_rank_volatility", "organic_share_pct", "keywords_tracked"]
-    );
+    // Weighted aggregation from counts
+    const vendorsRaw = (vendorRes.data ?? []).filter((r: any) => r.platform);
+    const vendors = aggregateSosHealth(vendorsRaw as any);
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
@@ -230,7 +223,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
       addGap("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
       addGap("Elite Share", "Gap in top-3 ranking share between platforms.", "elite_rank_share_pct", 5);
-      addGap("Rank Stability", "Difference in average rank movement between platforms.", "avg_rank_volatility", 2, true);
 
       setGaps(gapMetrics);
     }

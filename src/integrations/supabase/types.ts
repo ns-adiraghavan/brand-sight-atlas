@@ -79,21 +79,18 @@ export type Database = {
           availability_pct: number | null
           must_have_availability_pct: number | null
           platform: string | null
-          sku_reliability_pct: number | null
           week: string | null
         }
         Insert: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
-          sku_reliability_pct?: number | null
           week?: string | null
         }
         Update: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
-          sku_reliability_pct?: number | null
           week?: string | null
         }
         Relationships: []
@@ -202,27 +199,27 @@ export type Database = {
       }
       ola_vendor_health_mat: {
         Row: {
-          availability_pct: number | null
-          must_have_availability_pct: number | null
+          available_skus: number | null
+          must_have_available_skus: number | null
+          must_have_skus: number | null
           platform: string | null
-          sku_reliability_pct: number | null
-          skus_tracked: number | null
+          total_skus: number | null
           week: string | null
         }
         Insert: {
-          availability_pct?: number | null
-          must_have_availability_pct?: number | null
+          available_skus?: number | null
+          must_have_available_skus?: number | null
+          must_have_skus?: number | null
           platform?: string | null
-          sku_reliability_pct?: number | null
-          skus_tracked?: number | null
+          total_skus?: number | null
           week?: string | null
         }
         Update: {
-          availability_pct?: number | null
-          must_have_availability_pct?: number | null
+          available_skus?: number | null
+          must_have_available_skus?: number | null
+          must_have_skus?: number | null
           platform?: string | null
-          sku_reliability_pct?: number | null
-          skus_tracked?: number | null
+          total_skus?: number | null
           week?: string | null
         }
         Relationships: []
@@ -251,21 +248,18 @@ export type Database = {
       sos_exec_summary_mat: {
         Row: {
           elite_rank_share_pct: number | null
-          exclusive_share_pct: number | null
           platform: string | null
           top10_presence_pct: number | null
           week: string | null
         }
         Insert: {
           elite_rank_share_pct?: number | null
-          exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
           week?: string | null
         }
         Update: {
           elite_rank_share_pct?: number | null
-          exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
           week?: string | null
@@ -406,30 +400,24 @@ export type Database = {
       }
       sos_vendor_health_mat: {
         Row: {
-          avg_rank_volatility: number | null
-          elite_rank_share_pct: number | null
-          keywords_tracked: number | null
-          organic_share_pct: number | null
+          elite_keywords: number | null
           platform: string | null
-          top10_presence_pct: number | null
+          top10_keywords: number | null
+          total_keywords: number | null
           week: string | null
         }
         Insert: {
-          avg_rank_volatility?: number | null
-          elite_rank_share_pct?: number | null
-          keywords_tracked?: number | null
-          organic_share_pct?: number | null
+          elite_keywords?: number | null
           platform?: string | null
-          top10_presence_pct?: number | null
+          top10_keywords?: number | null
+          total_keywords?: number | null
           week?: string | null
         }
         Update: {
-          avg_rank_volatility?: number | null
-          elite_rank_share_pct?: number | null
-          keywords_tracked?: number | null
-          organic_share_pct?: number | null
+          elite_keywords?: number | null
           platform?: string | null
-          top10_presence_pct?: number | null
+          top10_keywords?: number | null
+          total_keywords?: number | null
           week?: string | null
         }
         Relationships: []

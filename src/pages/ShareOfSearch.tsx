@@ -11,13 +11,13 @@ import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { ExecutionDiagnostics } from "@/components/dashboard/ExecutionDiagnostics";
-import { aggregateByPlatform } from "@/lib/aggregation";
+import { aggregateSosHealth } from "@/lib/aggregation";
 
 interface ExecSummary {
   platform: string;
-  top10_presence_pct: number;
-  elite_rank_share_pct: number;
-  exclusive_share_pct: number;
+  top10_presence_pct: number | null;
+  elite_rank_share_pct: number | null;
+  keywords_tracked: number;
 }
 
 interface RankDistRow {
@@ -87,8 +87,8 @@ export default function ShareOfSearch() {
     const toISO = dateRange.to.toISOString();
 
     Promise.all([
-      supabase.from("sos_exec_summary_mat")
-        .select("platform, top10_presence_pct, elite_rank_share_pct, exclusive_share_pct, week")
+      supabase.from("sos_vendor_health_mat")
+        .select("platform, top10_keywords, elite_keywords, total_keywords, week")
         .gte("week", fromISO)
         .lte("week", toISO),
       supabase.from("sos_rank_distribution_mat")
@@ -107,13 +107,10 @@ export default function ShareOfSearch() {
         .lte("week", toISO)
         .limit(200),
     ]).then(([execRes, distRes, volRes, riskRes]) => {
-      // Exec summary: AVG by platform
+      // Exec summary: weighted aggregation from counts
       if (execRes.data) {
-        const agg = aggregateByPlatform(
-          execRes.data,
-          ["top10_presence_pct", "elite_rank_share_pct", "exclusive_share_pct"]
-        );
-        setExec(agg as ExecSummary[]);
+        const filtered = execRes.data.filter((r: any) => r.platform);
+        setExec(aggregateSosHealth(filtered as any) as ExecSummary[]);
       }
 
       // Rank distribution: SUM listing_count by rank_bucket (across weeks + platforms)
@@ -195,7 +192,7 @@ export default function ShareOfSearch() {
   const topPlatform = platformsSorted[0];
   const bottomPlatform = platformsSorted[platformsSorted.length - 1];
   const presenceGapPP = topPlatform && bottomPlatform
-    ? ((topPlatform.top10_presence_pct - bottomPlatform.top10_presence_pct) * 100).toFixed(1)
+    ? (((topPlatform.top10_presence_pct ?? 0) - (bottomPlatform.top10_presence_pct ?? 0)) * 100).toFixed(1)
     : null;
 
   const sosInsightLines: string[] = [];
@@ -291,8 +288,8 @@ export default function ShareOfSearch() {
                       <div key={p.platform} className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground capitalize">{p.platform}</span>
                         <div className="flex gap-4">
-                          <span className="font-medium text-foreground">Top10: {(p.top10_presence_pct * 100).toFixed(1)}%</span>
-                          <span className="font-medium text-foreground">Elite: {(p.elite_rank_share_pct * 100).toFixed(1)}%</span>
+                          <span className="font-medium text-foreground">Top10: {((p.top10_presence_pct ?? 0) * 100).toFixed(1)}%</span>
+                          <span className="font-medium text-foreground">Elite: {((p.elite_rank_share_pct ?? 0) * 100).toFixed(1)}%</span>
                         </div>
                       </div>
                     ))}

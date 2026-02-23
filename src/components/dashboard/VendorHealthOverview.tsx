@@ -3,23 +3,20 @@ import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
 import { useDateRange } from "@/contexts/DateRangeContext";
-import { aggregateByPlatform } from "@/lib/aggregation";
+import { aggregateOlaHealth, aggregateSosHealth } from "@/lib/aggregation";
 
 interface OlaVendorRow {
   platform: string;
-  skus_tracked: number | null;
+  skus_tracked: number;
   availability_pct: number | null;
   must_have_availability_pct: number | null;
-  sku_reliability_pct: number | null;
 }
 
 interface SosVendorRow {
   platform: string;
-  keywords_tracked: number | null;
+  keywords_tracked: number;
   top10_presence_pct: number | null;
   elite_rank_share_pct: number | null;
-  organic_share_pct: number | null;
-  avg_rank_volatility: number | null;
 }
 
 type MetricDef = {
@@ -52,13 +49,6 @@ const OLA_METRICS: MetricDef[] = [
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
   },
-  {
-    label: "SKU Reliability %",
-    tooltip: "% of SKUs maintaining ≥80% availability across a 90-day window. Measures long-term stock consistency.",
-    getValue: (r: OlaVendorRow) => r.sku_reliability_pct,
-    format: (v) => `${(v * 100).toFixed(1)}%`,
-    higherIsBetter: true,
-  },
 ];
 
 const SOS_METRICS: MetricDef[] = [
@@ -83,20 +73,6 @@ const SOS_METRICS: MetricDef[] = [
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
   },
-  {
-    label: "Organic Share %",
-    tooltip: "Share of organic (non-sponsored) listings in top search results attributed to HUL products.",
-    getValue: (r: SosVendorRow) => r.organic_share_pct,
-    format: (v) => `${(v * 100).toFixed(1)}%`,
-    higherIsBetter: true,
-  },
-  {
-    label: "Rank Volatility",
-    tooltip: "Average standard deviation of daily search rank across tracked keywords. Lower values indicate more stable positioning.",
-    getValue: (r: SosVendorRow) => r.avg_rank_volatility,
-    format: (v) => v.toFixed(2),
-    higherIsBetter: false,
-  },
 ];
 
 interface VendorHealthOverviewProps {
@@ -109,26 +85,39 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   const { dateRange } = useDateRange();
 
   const metrics = variant === "ola" ? OLA_METRICS : SOS_METRICS;
-  const viewName = variant === "ola" ? "ola_vendor_health_mat" : "sos_vendor_health_mat";
-  const numericKeys = variant === "ola"
-    ? ["skus_tracked", "availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
-    : ["keywords_tracked", "top10_presence_pct", "elite_rank_share_pct", "organic_share_pct", "avg_rank_volatility"];
 
   useEffect(() => {
-    supabase
-      .from(viewName)
-      .select("*")
-      .gte("week", dateRange.from.toISOString())
-      .lte("week", dateRange.to.toISOString())
-      .then(({ data }) => {
-        if (data) {
-          const filtered = data.filter((r: any) => r.platform);
-          const aggregated = aggregateByPlatform(filtered, numericKeys);
-          setRows(aggregated);
-        }
-        setLoading(false);
-      });
-  }, [viewName, dateRange.from.getTime(), dateRange.to.getTime()]);
+    const fromISO = dateRange.from.toISOString();
+    const toISO = dateRange.to.toISOString();
+
+    if (variant === "ola") {
+      supabase
+        .from("ola_vendor_health_mat")
+        .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
+        .gte("week", fromISO)
+        .lte("week", toISO)
+        .then(({ data }) => {
+          if (data) {
+            const filtered = data.filter((r: any) => r.platform);
+            setRows(aggregateOlaHealth(filtered as any));
+          }
+          setLoading(false);
+        });
+    } else {
+      supabase
+        .from("sos_vendor_health_mat")
+        .select("platform, top10_keywords, elite_keywords, total_keywords, week")
+        .gte("week", fromISO)
+        .lte("week", toISO)
+        .then(({ data }) => {
+          if (data) {
+            const filtered = data.filter((r: any) => r.platform);
+            setRows(aggregateSosHealth(filtered as any));
+          }
+          setLoading(false);
+        });
+    }
+  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
 
   const platforms = rows.map((r: any) => r.platform as string);
 

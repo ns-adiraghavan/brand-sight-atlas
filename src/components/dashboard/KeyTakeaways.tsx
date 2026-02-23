@@ -3,20 +3,12 @@ import { TrendingUp, TrendingDown, Minus, ShieldCheck, Target, Zap } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
-import { aggregateByPlatform } from "@/lib/aggregation";
+import { aggregateOlaHealth, aggregateSosHealth, type OlaHealthAggregated, type SosHealthAggregated } from "@/lib/aggregation";
 
-interface VendorHealthOLA {
+interface WeeklyTrendOLA {
+  week: string;
   platform: string;
   availability_pct: number | null;
-  must_have_availability_pct: number | null;
-  sku_reliability_pct: number | null;
-}
-
-interface VendorHealthSoS {
-  platform: string;
-  top10_presence_pct: number | null;
-  elite_rank_share_pct: number | null;
-  organic_share_pct: number | null;
 }
 
 interface WeeklyTrendOLA {
@@ -107,7 +99,7 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
       if (variant === "ola") {
         const [healthRes, trendRes] = await Promise.all([
           supabase.from("ola_vendor_health_mat")
-            .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct, week")
+            .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
             .gte("week", fromISO)
             .lte("week", toISO),
           supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct")
@@ -116,12 +108,9 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
             .order("week", { ascending: true }),
         ]);
 
-        // Aggregate vendor health across weeks → one row per platform
-        const healthRaw = (healthRes.data ?? []);
-        const health = aggregateByPlatform(
-          healthRaw,
-          ["availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
-        ) as VendorHealthOLA[];
+        // Weighted aggregation from counts
+        const healthRaw = (healthRes.data ?? []).filter((r: any) => r.platform);
+        const health = aggregateOlaHealth(healthRaw as any);
         const trend = (trendRes.data ?? []) as WeeklyTrendOLA[];
 
         if (health.length === 0) { setLoading(false); return; }
@@ -195,7 +184,7 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
       } else {
         const [healthRes, trendRes] = await Promise.all([
           supabase.from("sos_vendor_health_mat")
-            .select("platform, top10_presence_pct, elite_rank_share_pct, organic_share_pct, week")
+            .select("platform, top10_keywords, elite_keywords, total_keywords, week")
             .gte("week", fromISO)
             .lte("week", toISO),
           supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct")
@@ -204,12 +193,9 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
             .order("week", { ascending: true }),
         ]);
 
-        // Aggregate vendor health across weeks → one row per platform
-        const healthRaw = (healthRes.data ?? []);
-        const health = aggregateByPlatform(
-          healthRaw,
-          ["top10_presence_pct", "elite_rank_share_pct", "organic_share_pct"]
-        ) as VendorHealthSoS[];
+        // Weighted aggregation from counts
+        const healthRaw = (healthRes.data ?? []).filter((r: any) => r.platform);
+        const health = aggregateSosHealth(healthRaw as any);
         const trend = (trendRes.data ?? []) as WeeklyTrendSoS[];
 
         if (health.length === 0) { setLoading(false); return; }
