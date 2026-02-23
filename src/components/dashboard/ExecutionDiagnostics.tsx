@@ -4,6 +4,7 @@ import { useDateRange } from "@/contexts/DateRangeContext";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { ArrowRight, Database, MapPin, Calendar, BarChart3 } from "lucide-react";
+import { aggregateByPlatform } from "@/lib/aggregation";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -75,16 +76,28 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
   /* ---- OLA loader ---- */
   async function loadOla() {
+    const fromISO = dateRange.from.toISOString();
+    const toISO = dateRange.to.toISOString();
+
     const [vendorRes, catRes, pinRes, weekRes] = await Promise.all([
-      supabase.from("ola_vendor_health_mat").select("*"),
+      supabase.from("ola_vendor_health_mat").select("*")
+        .gte("week", fromISO)
+        .lte("week", toISO),
       supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
-      supabase.from("ola_pincode_volatility_mat").select("platform, location"),
+      supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index, week")
+        .gte("week", fromISO)
+        .lte("week", toISO),
       supabase.from("ola_weekly_trend_mat").select("platform, week")
-        .gte("week", dateRange.from.toISOString())
-        .lte("week", dateRange.to.toISOString()),
+        .gte("week", fromISO)
+        .lte("week", toISO),
     ]);
 
-    const vendors = (vendorRes.data ?? []) as any[];
+    // Aggregate vendor health by platform
+    const vendorsRaw = (vendorRes.data ?? []) as any[];
+    const vendors = aggregateByPlatform(
+      vendorsRaw,
+      ["availability_pct", "must_have_availability_pct", "sku_reliability_pct", "skus_tracked"]
+    );
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
@@ -115,7 +128,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       setGaps(gapMetrics);
     }
 
-    // Category health
+    // Category health (no week column — kept as-is)
     const catData = (catRes.data ?? []) as any[];
     const catMap = new Map<string, Record<string, number | null>>();
     for (const row of catData) {
@@ -132,7 +145,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       });
     setCategories(catRows);
 
-    // Coverage
+    // Coverage — pincode locations (aggregate unique locations from filtered data)
     const locByPlatform = new Map<string, Set<string>>();
     for (const row of (pinRes.data ?? []) as any[]) {
       const p = row.platform as string;
@@ -151,7 +164,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       {
         label: "SKUs Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, (vendors.find((v: any) => v.platform === p)?.skus_tracked ?? 0).toLocaleString()])),
+        platforms: Object.fromEntries(plats.map((p) => [p, Math.round(vendors.find((v: any) => v.platform === p)?.skus_tracked ?? 0).toLocaleString()])),
       },
       {
         label: "Locations",
@@ -170,15 +183,27 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
   /* ---- SoS loader ---- */
   async function loadSos() {
+    const fromISO = dateRange.from.toISOString();
+    const toISO = dateRange.to.toISOString();
+
     const [vendorRes, riskRes, weekRes] = await Promise.all([
-      supabase.from("sos_vendor_health_mat").select("*"),
-      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
+      supabase.from("sos_vendor_health_mat").select("*")
+        .gte("week", fromISO)
+        .lte("week", toISO),
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform, week")
+        .gte("week", fromISO)
+        .lte("week", toISO),
       supabase.from("sos_weekly_trend_mat").select("platform, week")
-        .gte("week", dateRange.from.toISOString())
-        .lte("week", dateRange.to.toISOString()),
+        .gte("week", fromISO)
+        .lte("week", toISO),
     ]);
 
-    const vendors = (vendorRes.data ?? []) as any[];
+    // Aggregate vendor health by platform
+    const vendorsRaw = (vendorRes.data ?? []) as any[];
+    const vendors = aggregateByPlatform(
+      vendorsRaw,
+      ["top10_presence_pct", "elite_rank_share_pct", "avg_rank_volatility", "organic_share_pct", "keywords_tracked"]
+    );
     const plats = vendors.map((r: any) => r.platform as string);
     setPlatforms(plats);
 
@@ -210,14 +235,26 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       setGaps(gapMetrics);
     }
 
-    // Category = performance band distribution per platform
+    // Category = performance band distribution per platform (aggregate across weeks — mode per keyword)
     const riskData = (riskRes.data ?? []) as any[];
-    const bandMap = new Map<string, Record<string, number>>();
+    // First aggregate by keyword+platform to get a single band per keyword
+    const kwBandMap = new Map<string, { bands: string[]; platform: string }>();
     for (const row of riskData) {
-      const band = row.performance_band as string;
-      const p = row.platform as string;
-      if (!bandMap.has(band)) bandMap.set(band, {});
-      bandMap.get(band)![p] = (bandMap.get(band)![p] ?? 0) + 1;
+      const key = `${row.search_keyword}||${row.platform}`;
+      if (!kwBandMap.has(key)) kwBandMap.set(key, { bands: [], platform: row.platform });
+      if (row.performance_band) kwBandMap.get(key)!.bands.push(row.performance_band);
+    }
+    // Then count bands per platform
+    const bandMap = new Map<string, Record<string, number>>();
+    for (const entry of kwBandMap.values()) {
+      // Mode band
+      const bandCounts = new Map<string, number>();
+      for (const b of entry.bands) bandCounts.set(b, (bandCounts.get(b) ?? 0) + 1);
+      let modeBand = entry.bands[0] ?? "Unknown";
+      let maxCount = 0;
+      for (const [b, c] of bandCounts) { if (c > maxCount) { modeBand = b; maxCount = c; } }
+      if (!bandMap.has(modeBand)) bandMap.set(modeBand, {});
+      bandMap.get(modeBand)![entry.platform] = (bandMap.get(modeBand)![entry.platform] ?? 0) + 1;
     }
     const bandOrder = ["Elite", "Strong", "Moderate", "Weak"];
     const catRows: CategoryRow[] = bandOrder
@@ -240,7 +277,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       {
         label: "Keywords Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
-        platforms: Object.fromEntries(plats.map((p) => [p, (vendors.find((v: any) => v.platform === p)?.keywords_tracked ?? 0).toLocaleString()])),
+        platforms: Object.fromEntries(plats.map((p) => [p, Math.round(vendors.find((v: any) => v.platform === p)?.keywords_tracked ?? 0).toLocaleString()])),
       },
       {
         label: "Weeks of Data",

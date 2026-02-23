@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Minus, ShieldCheck, Target, Zap } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
+import { aggregateByPlatform } from "@/lib/aggregation";
 
 interface VendorHealthOLA {
   platform: string;
@@ -100,16 +101,27 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
 
   useEffect(() => {
     async function load() {
+      const fromISO = dateRange.from.toISOString();
+      const toISO = dateRange.to.toISOString();
+
       if (variant === "ola") {
         const [healthRes, trendRes] = await Promise.all([
-          supabase.from("ola_vendor_health_mat").select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct"),
+          supabase.from("ola_vendor_health_mat")
+            .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct, week")
+            .gte("week", fromISO)
+            .lte("week", toISO),
           supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct")
-            .gte("week", dateRange.from.toISOString())
-            .lte("week", dateRange.to.toISOString())
+            .gte("week", fromISO)
+            .lte("week", toISO)
             .order("week", { ascending: true }),
         ]);
 
-        const health = (healthRes.data ?? []) as VendorHealthOLA[];
+        // Aggregate vendor health across weeks → one row per platform
+        const healthRaw = (healthRes.data ?? []);
+        const health = aggregateByPlatform(
+          healthRaw,
+          ["availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
+        ) as VendorHealthOLA[];
         const trend = (trendRes.data ?? []) as WeeklyTrendOLA[];
 
         if (health.length === 0) { setLoading(false); return; }
@@ -182,14 +194,22 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
         setCards([card1, card2, card3]);
       } else {
         const [healthRes, trendRes] = await Promise.all([
-          supabase.from("sos_vendor_health_mat").select("platform, top10_presence_pct, elite_rank_share_pct, organic_share_pct"),
+          supabase.from("sos_vendor_health_mat")
+            .select("platform, top10_presence_pct, elite_rank_share_pct, organic_share_pct, week")
+            .gte("week", fromISO)
+            .lte("week", toISO),
           supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct")
-            .gte("week", dateRange.from.toISOString())
-            .lte("week", dateRange.to.toISOString())
+            .gte("week", fromISO)
+            .lte("week", toISO)
             .order("week", { ascending: true }),
         ]);
 
-        const health = (healthRes.data ?? []) as VendorHealthSoS[];
+        // Aggregate vendor health across weeks → one row per platform
+        const healthRaw = (healthRes.data ?? []);
+        const health = aggregateByPlatform(
+          healthRaw,
+          ["top10_presence_pct", "elite_rank_share_pct", "organic_share_pct"]
+        ) as VendorHealthSoS[];
         const trend = (trendRes.data ?? []) as WeeklyTrendSoS[];
 
         if (health.length === 0) { setLoading(false); return; }

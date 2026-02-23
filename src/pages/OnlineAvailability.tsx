@@ -13,6 +13,7 @@ import { MetricTooltip } from "@/components/dashboard/MetricTooltip";
 import { VendorHealthOverview } from "@/components/dashboard/VendorHealthOverview";
 import { KeyTakeaways } from "@/components/dashboard/KeyTakeaways";
 import { supabase } from "@/integrations/supabase/client";
+import { aggregateByPlatform } from "@/lib/aggregation";
 
 interface ExecSummary {
   platform: string;
@@ -22,7 +23,7 @@ interface ExecSummary {
 }
 
 export default function OnlineAvailability() {
-  const { preset, getTimePhrase } = useDateRange();
+  const { preset, getTimePhrase, dateRange } = useDateRange();
   const dataStatus = useDataStatus(preset);
 
   const [execData, setExecData] = useState<ExecSummary[]>([]);
@@ -32,17 +33,22 @@ export default function OnlineAvailability() {
     supabase
       .from("ola_exec_summary_mat")
       .select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct")
+      .gte("week", dateRange.from.toISOString())
+      .lte("week", dateRange.to.toISOString())
       .then(({ data: rows }) => {
         if (rows) {
-          setExecData(
-            rows.filter(
-              (r) => r.platform && r.availability_pct != null
-            ) as ExecSummary[]
+          const filtered = rows.filter(
+            (r) => r.platform && r.availability_pct != null
           );
+          const aggregated = aggregateByPlatform(
+            filtered,
+            ["availability_pct", "must_have_availability_pct", "sku_reliability_pct"]
+          );
+          setExecData(aggregated as ExecSummary[]);
         }
         setLoading(false);
       });
-  }, []);
+  }, [dateRange.from.getTime(), dateRange.to.getTime()]);
 
   // Aggregate across platforms
   const avgAvailability =
