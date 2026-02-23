@@ -564,6 +564,14 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_category_health_mat: {
+        Row: {
+          availability_pct: number | null
+          business_group_clean: string | null
+          platform: string | null
+        }
+        Relationships: []
+      }
       ola_city_persistence: {
         Row: {
           location: string | null
