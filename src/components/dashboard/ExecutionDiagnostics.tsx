@@ -106,7 +106,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       };
 
       addGap("Availability", "Overall availability % gap between platforms.", "availability_pct", 5);
-      addGap("Must-Have Avail", "Gap in must-have SKU availability between platforms.", "must_have_availability_pct", 5);
       setGaps(gapMetrics);
     }
 
