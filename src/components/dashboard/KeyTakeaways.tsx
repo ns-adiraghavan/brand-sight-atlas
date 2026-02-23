@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Minus, ShieldCheck, Target, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
-import { aggregateOlaHealth, aggregateSosHealth, type OlaHealthAggregated, type SosHealthAggregated } from "@/lib/aggregation";
-
-interface WeeklyTrendOLA {
-  week: string;
-  platform: string;
-  availability_pct: number | null;
-}
 
 interface WeeklyTrendOLA {
   week: string;
@@ -89,28 +81,17 @@ const TrendIcon = ({ dir }: { dir: TrendDir }) => {
 export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
   const [cards, setCards] = useState<InsightCard[]>([]);
   const [loading, setLoading] = useState(true);
-  const { dateRange } = useDateRange();
 
   useEffect(() => {
     async function load() {
-      const fromISO = dateRange.from.toISOString();
-      const toISO = dateRange.to.toISOString();
-
       if (variant === "ola") {
-        const [healthRes, trendRes] = await Promise.all([
-          supabase.from("ola_vendor_health_mat")
-            .select("platform, available_skus, total_skus, must_have_available_skus, must_have_skus, week")
-            .gte("week", fromISO)
-            .lte("week", toISO),
+        const [execRes, trendRes] = await Promise.all([
+          supabase.from("ola_exec_summary").select("platform, availability_pct, must_have_availability_pct"),
           supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct")
-            .gte("week", fromISO)
-            .lte("week", toISO)
             .order("week", { ascending: true }),
         ]);
 
-        // Weighted aggregation from counts
-        const healthRaw = (healthRes.data ?? []).filter((r: any) => r.platform);
-        const health = aggregateOlaHealth(healthRaw as any);
+        const health = (execRes.data ?? []).filter((r: any) => r.platform) as { platform: string; availability_pct: number | null; must_have_availability_pct: number | null }[];
         const trend = (trendRes.data ?? []) as WeeklyTrendOLA[];
 
         if (health.length === 0) { setLoading(false); return; }
@@ -119,7 +100,6 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
         const top = sorted[0];
         const bottom = sorted[sorted.length - 1];
 
-        // Card 1: vendor comparison
         const gap = ((top.availability_pct ?? 0) - (bottom.availability_pct ?? 0));
         const card1: InsightCard = {
           icon: Target,
@@ -136,7 +116,7 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
           tint: gap > 0.1 ? "red" : gap > 0.05 ? "amber" : "green",
         };
 
-        // Card 2: trend
+        // Card 2: trend (uses all trend data, no date filter)
         const weeklyAgg = new Map<string, number[]>();
         for (const r of trend) {
           if (r.week && r.availability_pct != null) {
@@ -182,20 +162,13 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
 
         setCards([card1, card2, card3]);
       } else {
-        const [healthRes, trendRes] = await Promise.all([
-          supabase.from("sos_vendor_health_mat")
-            .select("platform, top10_keywords, elite_keywords, total_keywords, week")
-            .gte("week", fromISO)
-            .lte("week", toISO),
+        const [execRes, trendRes] = await Promise.all([
+          supabase.from("sos_exec_summary").select("platform, top10_presence_pct, elite_rank_share_pct"),
           supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct")
-            .gte("week", fromISO)
-            .lte("week", toISO)
             .order("week", { ascending: true }),
         ]);
 
-        // Weighted aggregation from counts
-        const healthRaw = (healthRes.data ?? []).filter((r: any) => r.platform);
-        const health = aggregateSosHealth(healthRaw as any);
+        const health = (execRes.data ?? []).filter((r: any) => r.platform) as { platform: string; top10_presence_pct: number | null; elite_rank_share_pct: number | null }[];
         const trend = (trendRes.data ?? []) as WeeklyTrendSoS[];
 
         if (health.length === 0) { setLoading(false); return; }
@@ -220,7 +193,6 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
           tint: gap > 0.1 ? "red" : gap > 0.05 ? "amber" : "green",
         };
 
-        // Card 2: trend
         const weeklyAgg = new Map<string, number[]>();
         for (const r of trend) {
           if (r.week && r.top10_presence_pct != null) {
@@ -247,7 +219,6 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
           tint: dir === "up" ? "green" : dir === "down" ? "red" : "amber",
         };
 
-        // Card 3: action
         const lowElite = health.find(h => (h.elite_rank_share_pct ?? 1) < 0.3);
         const card3: InsightCard = {
           icon: lowElite ? Zap : ShieldCheck,
@@ -269,7 +240,7 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
       setLoading(false);
     }
     load();
-  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
+  }, [variant]);
 
   if (loading || cards.length === 0) return null;
 
@@ -286,7 +257,6 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
                 tintStyles[card.tint]
               )}
             >
-              {/* Top row: icon + headline */}
               <div className="flex items-start gap-2.5">
                 <div className={cn("p-1.5 rounded-lg shrink-0", tintIconBg[card.tint])}>
                   <Icon className="w-4 h-4" />
@@ -300,8 +270,6 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
                   </p>
                 </div>
               </div>
-
-              {/* Bottom row: metric + trend */}
               <div className="flex items-center justify-between pt-1 border-t border-foreground/5">
                 <span className="text-base font-semibold text-foreground tracking-tight">
                   {card.metric}
