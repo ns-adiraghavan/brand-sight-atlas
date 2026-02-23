@@ -194,18 +194,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ola_platform_gap_mat: {
-        Row: {
-          availability_gap: number | null
-        }
-        Insert: {
-          availability_gap?: number | null
-        }
-        Update: {
-          availability_gap?: number | null
-        }
-        Relationships: []
-      }
       ola_vendor_health_mat: {
         Row: {
           availability_pct: number | null
@@ -246,24 +234,6 @@ export type Database = {
         Update: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
-          platform?: string | null
-          week?: string | null
-        }
-        Relationships: []
-      }
-      sos_exclusive_weekly_mat: {
-        Row: {
-          exclusive_share_pct: number | null
-          platform: string | null
-          week: string | null
-        }
-        Insert: {
-          exclusive_share_pct?: number | null
-          platform?: string | null
-          week?: string | null
-        }
-        Update: {
-          exclusive_share_pct?: number | null
           platform?: string | null
           week?: string | null
         }
