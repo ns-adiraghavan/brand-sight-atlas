@@ -76,9 +76,9 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
   async function loadOla() {
     const [vendorRes, catRes, pinRes] = await Promise.all([
-      supabase.from("ola_vendor_health").select("platform, skus_tracked, availability_pct, must_have_availability_pct"),
+      supabase.from("vendor_health_overview_mat").select("platform, skus_tracked, availability_pct"),
       supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
-      supabase.from("ola_pincode_volatility").select("platform, location, avg_availability, volatility_index"),
+      supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
@@ -106,7 +106,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       };
 
       addGap("Availability", "Overall availability % gap between platforms.", "availability_pct", 5);
-      addGap("Must-Have Avail", "Gap in must-have SKU availability between platforms.", "must_have_availability_pct", 5);
       setGaps(gapMetrics);
     }
 
@@ -153,8 +152,8 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
 
   async function loadSos() {
     const [vendorRes, riskRes] = await Promise.all([
-      supabase.from("sos_vendor_health").select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct"),
-      supabase.from("sos_keyword_risk").select("search_keyword, performance_band, platform"),
+      supabase.from("vendor_search_overview_mat").select("platform, keywords_tracked, top10_presence_pct"),
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
@@ -183,7 +182,6 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       };
 
       addGap("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
-      addGap("Elite Share", "Gap in top-3 ranking share between platforms.", "elite_rank_share_pct", 5);
       setGaps(gapMetrics);
     }
 

@@ -85,8 +85,13 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
   useEffect(() => {
     async function load() {
       if (variant === "ola") {
+        // Get latest week from ola_exec_summary_mat for exec data
+        const latestWeekRes = await supabase.from("ola_exec_summary_mat").select("week").order("week", { ascending: false }).limit(1);
+        const latestWeek = latestWeekRes.data?.[0]?.week;
         const [execRes, trendRes] = await Promise.all([
-          supabase.from("ola_exec_summary").select("platform, availability_pct, must_have_availability_pct"),
+          latestWeek
+            ? supabase.from("ola_exec_summary_mat").select("platform, availability_pct, must_have_availability_pct").eq("week", latestWeek)
+            : Promise.resolve({ data: [] }),
           supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct")
             .order("week", { ascending: true }),
         ]);
@@ -162,8 +167,13 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
 
         setCards([card1, card2, card3]);
       } else {
+        // Get latest week from sos_exec_summary_mat
+        const latestSosWeekRes = await supabase.from("sos_exec_summary_mat").select("week").order("week", { ascending: false }).limit(1);
+        const latestSosWeek = latestSosWeekRes.data?.[0]?.week;
         const [execRes, trendRes] = await Promise.all([
-          supabase.from("sos_exec_summary").select("platform, top10_presence_pct, elite_rank_share_pct"),
+          latestSosWeek
+            ? supabase.from("sos_exec_summary_mat").select("platform, top10_presence_pct, elite_rank_share_pct").eq("week", latestSosWeek)
+            : Promise.resolve({ data: [] }),
           supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct")
             .order("week", { ascending: true }),
         ]);

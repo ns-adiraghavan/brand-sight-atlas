@@ -87,18 +87,25 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   useEffect(() => {
     if (variant === "ola") {
       supabase
-        .from("ola_vendor_health")
-        .select("platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct")
+        .from("vendor_health_overview_mat")
+        .select("platform, skus_tracked, availability_pct")
         .then(({ data }) => {
-          if (data) setRows(data.filter((r: any) => r.platform));
+          if (data) setRows(data.filter((r: any) => r.platform).map((r: any) => ({
+            ...r,
+            must_have_availability_pct: null,
+            sku_reliability_pct: null,
+          })));
           setLoading(false);
         });
     } else {
       supabase
-        .from("sos_vendor_health")
-        .select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct")
+        .from("vendor_search_overview_mat")
+        .select("platform, keywords_tracked, top10_presence_pct")
         .then(({ data }) => {
-          if (data) setRows(data.filter((r: any) => r.platform));
+          if (data) setRows(data.filter((r: any) => r.platform).map((r: any) => ({
+            ...r,
+            elite_rank_share_pct: null,
+          })));
           setLoading(false);
         });
     }
