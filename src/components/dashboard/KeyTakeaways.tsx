@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Minus, ShieldCheck, Target, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDateRange } from "@/contexts/DateRangeContext";
 import { cn } from "@/lib/utils";
 
 interface VendorHealthOLA {
@@ -95,13 +96,17 @@ const TrendIcon = ({ dir }: { dir: TrendDir }) => {
 export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
   const [cards, setCards] = useState<InsightCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const { dateRange } = useDateRange();
 
   useEffect(() => {
     async function load() {
       if (variant === "ola") {
         const [healthRes, trendRes] = await Promise.all([
           supabase.from("ola_vendor_health_mat").select("platform, availability_pct, must_have_availability_pct, sku_reliability_pct"),
-          supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct").order("week", { ascending: true }),
+          supabase.from("ola_weekly_trend_mat").select("week, platform, availability_pct")
+            .gte("week", dateRange.from.toISOString())
+            .lte("week", dateRange.to.toISOString())
+            .order("week", { ascending: true }),
         ]);
 
         const health = (healthRes.data ?? []) as VendorHealthOLA[];
@@ -178,7 +183,10 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
       } else {
         const [healthRes, trendRes] = await Promise.all([
           supabase.from("sos_vendor_health_mat").select("platform, top10_presence_pct, elite_rank_share_pct, organic_share_pct"),
-          supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct").order("week", { ascending: true }),
+          supabase.from("sos_weekly_trend_mat").select("week, platform, top10_presence_pct")
+            .gte("week", dateRange.from.toISOString())
+            .lte("week", dateRange.to.toISOString())
+            .order("week", { ascending: true }),
         ]);
 
         const health = (healthRes.data ?? []) as VendorHealthSoS[];
@@ -255,7 +263,7 @@ export function KeyTakeaways({ variant }: KeyTakeawaysProps) {
       setLoading(false);
     }
     load();
-  }, [variant]);
+  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
 
   if (loading || cards.length === 0) return null;
 

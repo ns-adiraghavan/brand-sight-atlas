@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useDateRange } from "@/contexts/DateRangeContext";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { ArrowRight, Database, MapPin, Calendar, BarChart3 } from "lucide-react";
@@ -62,6 +63,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   const [coverage, setCoverage] = useState<CoverageRow[]>([]);
   const [platforms, setPlatforms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const { dateRange } = useDateRange();
 
   useEffect(() => {
     if (variant === "ola") {
@@ -69,7 +71,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     } else {
       loadSos();
     }
-  }, [variant]);
+  }, [variant, dateRange.from.getTime(), dateRange.to.getTime()]);
 
   /* ---- OLA loader ---- */
   async function loadOla() {
@@ -77,7 +79,9 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       supabase.from("ola_vendor_health_mat").select("*"),
       supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
       supabase.from("ola_pincode_volatility_mat").select("platform, location"),
-      supabase.from("ola_weekly_trend_mat").select("platform, week"),
+      supabase.from("ola_weekly_trend_mat").select("platform, week")
+        .gte("week", dateRange.from.toISOString())
+        .lte("week", dateRange.to.toISOString()),
     ]);
 
     const vendors = (vendorRes.data ?? []) as any[];
@@ -169,7 +173,9 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     const [vendorRes, riskRes, weekRes] = await Promise.all([
       supabase.from("sos_vendor_health_mat").select("*"),
       supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
-      supabase.from("sos_weekly_trend_mat").select("platform, week"),
+      supabase.from("sos_weekly_trend_mat").select("platform, week")
+        .gte("week", dateRange.from.toISOString())
+        .lte("week", dateRange.to.toISOString()),
     ]);
 
     const vendors = (vendorRes.data ?? []) as any[];
