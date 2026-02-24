@@ -191,6 +191,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_pincode_volatility_mat: {
+        Row: {
+          avg_availability: number | null
+          location: string | null
+          platform: string | null
+          volatility_index: number | null
+        }
+        Insert: {
+          avg_availability?: number | null
+          location?: string | null
+          platform?: string | null
+          volatility_index?: number | null
+        }
+        Update: {
+          avg_availability?: number | null
+          location?: string | null
+          platform?: string | null
+          volatility_index?: number | null
+        }
+        Relationships: []
+      }
       ola_vendor_health_mat: {
         Row: {
           availability_pct: number | null
@@ -317,6 +338,48 @@ export type Database = {
           search_rank?: number | null
           search_type?: string | null
           seller_name?: string | null
+        }
+        Relationships: []
+      }
+      sos_keyword_risk_mat: {
+        Row: {
+          mean_rank: number | null
+          performance_band: string | null
+          platform: string | null
+          search_keyword: string | null
+        }
+        Insert: {
+          mean_rank?: number | null
+          performance_band?: string | null
+          platform?: string | null
+          search_keyword?: string | null
+        }
+        Update: {
+          mean_rank?: number | null
+          performance_band?: string | null
+          platform?: string | null
+          search_keyword?: string | null
+        }
+        Relationships: []
+      }
+      sos_keyword_volatility_mat: {
+        Row: {
+          mean_rank: number | null
+          platform: string | null
+          rank_volatility: number | null
+          search_keyword: string | null
+        }
+        Insert: {
+          mean_rank?: number | null
+          platform?: string | null
+          rank_volatility?: number | null
+          search_keyword?: string | null
+        }
+        Update: {
+          mean_rank?: number | null
+          platform?: string | null
+          rank_volatility?: number | null
+          search_keyword?: string | null
         }
         Relationships: []
       }

@@ -78,7 +78,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     const [vendorRes, catRes, pinRes] = await Promise.all([
       supabase.from("vendor_health_overview_mat").select("platform, skus_tracked, availability_pct"),
       supabase.from("ola_category_health_mat").select("business_group, availability_pct, platform"),
-      supabase.from("ola_pincode_volatility").select("platform, location, avg_availability, volatility_index"),
+      supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
@@ -153,7 +153,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   async function loadSos() {
     const [vendorRes, riskRes] = await Promise.all([
       supabase.from("sos_vendor_health_mat").select("platform, keywords_tracked, top10_presence_pct"),
-      supabase.from("sos_keyword_risk").select("search_keyword, performance_band, platform"),
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
