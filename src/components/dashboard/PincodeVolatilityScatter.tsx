@@ -25,7 +25,7 @@ export function PincodeVolatilityScatter() {
 
   useEffect(() => {
     supabase
-      .from("ola_pincode_volatility_mat")
+      .from("ola_pincode_volatility")
       .select("location, platform, avg_availability, volatility_index")
       .then(({ data: rows }) => {
         if (rows && rows.length > 0) {
