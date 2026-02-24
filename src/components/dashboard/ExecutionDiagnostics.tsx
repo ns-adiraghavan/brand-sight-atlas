@@ -77,8 +77,8 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   async function loadOla() {
     const [vendorRes, catRes, pinRes] = await Promise.all([
       supabase.from("vendor_health_overview_mat").select("platform, skus_tracked, availability_pct"),
-      supabase.from("ola_category_health_mat").select("business_group_clean, availability_pct, platform"),
-      supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index"),
+      supabase.from("ola_category_health_mat").select("business_group, availability_pct, platform"),
+      supabase.from("ola_pincode_volatility").select("platform, location, avg_availability, volatility_index"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
