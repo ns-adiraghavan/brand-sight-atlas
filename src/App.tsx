@@ -28,6 +28,7 @@ const App = () => (
               <Route path="/sos" element={<ShareOfSearch />} />
               <Route path="/pso" element={<PerfectStoreOnline />} />
               <Route path="/soa" element={<ShareOfAssortment />} />
+              <Route path="/data-lineage" element={<DataLineage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
