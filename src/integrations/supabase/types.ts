@@ -29,6 +29,33 @@ export type Database = {
         }
         Relationships: []
       }
+      exec_overview_mat: {
+        Row: {
+          availability_pct: number | null
+          elite_rank_share_pct: number | null
+          exclusive_share_pct: number | null
+          must_have_availability_pct: number | null
+          platform: string | null
+          top10_presence_pct: number | null
+        }
+        Insert: {
+          availability_pct?: number | null
+          elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Update: {
+          availability_pct?: number | null
+          elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
+          must_have_availability_pct?: number | null
+          platform?: string | null
+          top10_presence_pct?: number | null
+        }
+        Relationships: []
+      }
       ola_availability_distribution_mat: {
         Row: {
           availability_band: string | null
@@ -47,30 +74,21 @@ export type Database = {
         }
         Relationships: []
       }
-      ola_bottom_skus_mat: {
+      ola_category_health_mat: {
         Row: {
-          base_pack: string | null
-          business_group_clean: string | null
+          availability_pct: number | null
+          business_group: string | null
           platform: string | null
-          risk_band: string | null
-          sku_availability_ratio: number | null
-          total_days: number | null
         }
         Insert: {
-          base_pack?: string | null
-          business_group_clean?: string | null
+          availability_pct?: number | null
+          business_group?: string | null
           platform?: string | null
-          risk_band?: string | null
-          sku_availability_ratio?: number | null
-          total_days?: number | null
         }
         Update: {
-          base_pack?: string | null
-          business_group_clean?: string | null
+          availability_pct?: number | null
+          business_group?: string | null
           platform?: string | null
-          risk_band?: string | null
-          sku_availability_ratio?: number | null
-          total_days?: number | null
         }
         Relationships: []
       }
@@ -79,19 +97,19 @@ export type Database = {
           availability_pct: number | null
           must_have_availability_pct: number | null
           platform: string | null
-          week: string | null
+          sku_reliability_pct: number | null
         }
         Insert: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
-          week?: string | null
+          sku_reliability_pct?: number | null
         }
         Update: {
           availability_pct?: number | null
           must_have_availability_pct?: number | null
           platform?: string | null
-          week?: string | null
+          sku_reliability_pct?: number | null
         }
         Relationships: []
       }
@@ -173,54 +191,27 @@ export type Database = {
         }
         Relationships: []
       }
-      ola_pincode_volatility_mat: {
-        Row: {
-          avg_availability: number | null
-          location: string | null
-          platform: string | null
-          volatility_index: number | null
-          week: string | null
-        }
-        Insert: {
-          avg_availability?: number | null
-          location?: string | null
-          platform?: string | null
-          volatility_index?: number | null
-          week?: string | null
-        }
-        Update: {
-          avg_availability?: number | null
-          location?: string | null
-          platform?: string | null
-          volatility_index?: number | null
-          week?: string | null
-        }
-        Relationships: []
-      }
       ola_vendor_health_mat: {
         Row: {
-          available_skus: number | null
-          must_have_available_skus: number | null
-          must_have_skus: number | null
+          availability_pct: number | null
+          must_have_availability_pct: number | null
           platform: string | null
-          total_skus: number | null
-          week: string | null
+          sku_reliability_pct: number | null
+          skus_tracked: number | null
         }
         Insert: {
-          available_skus?: number | null
-          must_have_available_skus?: number | null
-          must_have_skus?: number | null
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
           platform?: string | null
-          total_skus?: number | null
-          week?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
         }
         Update: {
-          available_skus?: number | null
-          must_have_available_skus?: number | null
-          must_have_skus?: number | null
+          availability_pct?: number | null
+          must_have_availability_pct?: number | null
           platform?: string | null
-          total_skus?: number | null
-          week?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
         }
         Relationships: []
       }
@@ -248,21 +239,21 @@ export type Database = {
       sos_exec_summary_mat: {
         Row: {
           elite_rank_share_pct: number | null
+          exclusive_share_pct: number | null
           platform: string | null
           top10_presence_pct: number | null
-          week: string | null
         }
         Insert: {
           elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
-          week?: string | null
         }
         Update: {
           elite_rank_share_pct?: number | null
+          exclusive_share_pct?: number | null
           platform?: string | null
           top10_presence_pct?: number | null
-          week?: string | null
         }
         Relationships: []
       }
@@ -329,96 +320,48 @@ export type Database = {
         }
         Relationships: []
       }
-      sos_keyword_risk_mat: {
-        Row: {
-          mean_rank: number | null
-          performance_band: string | null
-          platform: string | null
-          search_keyword: string | null
-          week: string | null
-        }
-        Insert: {
-          mean_rank?: number | null
-          performance_band?: string | null
-          platform?: string | null
-          search_keyword?: string | null
-          week?: string | null
-        }
-        Update: {
-          mean_rank?: number | null
-          performance_band?: string | null
-          platform?: string | null
-          search_keyword?: string | null
-          week?: string | null
-        }
-        Relationships: []
-      }
-      sos_keyword_volatility_mat: {
-        Row: {
-          mean_rank: number | null
-          platform: string | null
-          rank_volatility: number | null
-          search_keyword: string | null
-          week: string | null
-        }
-        Insert: {
-          mean_rank?: number | null
-          platform?: string | null
-          rank_volatility?: number | null
-          search_keyword?: string | null
-          week?: string | null
-        }
-        Update: {
-          mean_rank?: number | null
-          platform?: string | null
-          rank_volatility?: number | null
-          search_keyword?: string | null
-          week?: string | null
-        }
-        Relationships: []
-      }
       sos_rank_distribution_mat: {
         Row: {
           listing_count: number | null
           platform: string | null
           rank_bucket: string | null
-          week: string | null
         }
         Insert: {
           listing_count?: number | null
           platform?: string | null
           rank_bucket?: string | null
-          week?: string | null
         }
         Update: {
           listing_count?: number | null
           platform?: string | null
           rank_bucket?: string | null
-          week?: string | null
         }
         Relationships: []
       }
       sos_vendor_health_mat: {
         Row: {
-          elite_keywords: number | null
+          avg_rank_volatility: number | null
+          elite_rank_share_pct: number | null
+          keywords_tracked: number | null
+          organic_share_pct: number | null
           platform: string | null
-          top10_keywords: number | null
-          total_keywords: number | null
-          week: string | null
+          top10_presence_pct: number | null
         }
         Insert: {
-          elite_keywords?: number | null
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
+          keywords_tracked?: number | null
+          organic_share_pct?: number | null
           platform?: string | null
-          top10_keywords?: number | null
-          total_keywords?: number | null
-          week?: string | null
+          top10_presence_pct?: number | null
         }
         Update: {
-          elite_keywords?: number | null
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
+          keywords_tracked?: number | null
+          organic_share_pct?: number | null
           platform?: string | null
-          top10_keywords?: number | null
-          total_keywords?: number | null
-          week?: string | null
+          top10_presence_pct?: number | null
         }
         Relationships: []
       }
@@ -446,38 +389,38 @@ export type Database = {
       vendor_health_overview_mat: {
         Row: {
           availability_pct: number | null
-          last_date: string | null
-          platform: string | null
-          skus_tracked: number | null
-        }
-        Insert: {
-          availability_pct?: number | null
-          last_date?: string | null
-          platform?: string | null
-          skus_tracked?: number | null
-        }
-        Update: {
-          availability_pct?: number | null
-          last_date?: string | null
-          platform?: string | null
-          skus_tracked?: number | null
-        }
-        Relationships: []
-      }
-      vendor_search_overview_mat: {
-        Row: {
+          avg_rank_volatility: number | null
+          elite_rank_share_pct: number | null
           keywords_tracked: number | null
+          must_have_availability_pct: number | null
+          organic_share_pct: number | null
           platform: string | null
+          sku_reliability_pct: number | null
+          skus_tracked: number | null
           top10_presence_pct: number | null
         }
         Insert: {
+          availability_pct?: number | null
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
           keywords_tracked?: number | null
+          must_have_availability_pct?: number | null
+          organic_share_pct?: number | null
           platform?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
           top10_presence_pct?: number | null
         }
         Update: {
+          availability_pct?: number | null
+          avg_rank_volatility?: number | null
+          elite_rank_share_pct?: number | null
           keywords_tracked?: number | null
+          must_have_availability_pct?: number | null
+          organic_share_pct?: number | null
           platform?: string | null
+          sku_reliability_pct?: number | null
+          skus_tracked?: number | null
           top10_presence_pct?: number | null
         }
         Relationships: []
@@ -539,14 +482,6 @@ export type Database = {
         Relationships: []
       }
       ola_category_health: {
-        Row: {
-          availability_pct: number | null
-          business_group_clean: string | null
-          platform: string | null
-        }
-        Relationships: []
-      }
-      ola_category_health_mat: {
         Row: {
           availability_pct: number | null
           business_group_clean: string | null
@@ -625,6 +560,14 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_vendor_gap_weekly: {
+        Row: {
+          availability_gap: number | null
+          must_have_gap: number | null
+          week: string | null
+        }
+        Relationships: []
+      }
       ola_vendor_health: {
         Row: {
           availability_pct: number | null
@@ -693,6 +636,14 @@ export type Database = {
           platform: string | null
           rank_volatility: number | null
           search_keyword: string | null
+        }
+        Relationships: []
+      }
+      sos_vendor_gap_weekly: {
+        Row: {
+          elite_gap: number | null
+          top10_gap: number | null
+          week: string | null
         }
         Relationships: []
       }

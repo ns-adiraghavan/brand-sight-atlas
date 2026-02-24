@@ -29,7 +29,7 @@ export function BottomSKUsTable() {
 
   useEffect(() => {
     supabase
-      .from("ola_bottom_skus_mat")
+      .from("ola_bottom_skus")
       .select("base_pack, business_group_clean, platform, risk_band, sku_availability_ratio, total_days")
       .order("sku_availability_ratio", { ascending: true })
       .limit(CHART_LIMITS.maxRows)
