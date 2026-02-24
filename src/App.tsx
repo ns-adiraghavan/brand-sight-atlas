@@ -10,6 +10,7 @@ import ShareOfSearch from "./pages/ShareOfSearch";
 import PerfectStoreOnline from "./pages/PerfectStoreOnline";
 import ShareOfAssortment from "./pages/ShareOfAssortment";
 import NotFound from "./pages/NotFound";
+import DataLineage from "./pages/DataLineage";
 
 const queryClient = new QueryClient();
 
