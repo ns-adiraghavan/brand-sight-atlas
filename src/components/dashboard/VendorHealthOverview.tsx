@@ -3,21 +3,6 @@ import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
 import { supabase } from "@/integrations/supabase/client";
 
-interface OlaVendorRow {
-  platform: string;
-  skus_tracked: number;
-  availability_pct: number | null;
-  must_have_availability_pct: number | null;
-  sku_reliability_pct: number | null;
-}
-
-interface SosVendorRow {
-  platform: string;
-  keywords_tracked: number;
-  top10_presence_pct: number | null;
-  elite_rank_share_pct: number | null;
-}
-
 type MetricDef = {
   label: string;
   tooltip: string;
@@ -30,21 +15,28 @@ const OLA_METRICS: MetricDef[] = [
   {
     label: "SKUs Tracked",
     tooltip: "Total number of unique SKUs being monitored for availability across all pincodes on this platform.",
-    getValue: (r: OlaVendorRow) => r.skus_tracked,
+    getValue: (r) => r.skus_tracked,
     format: (v) => v.toLocaleString(),
     higherIsBetter: true,
   },
   {
     label: "Availability %",
     tooltip: "Percentage of tracked SKU-pincode-day observations where the product was in stock.",
-    getValue: (r: OlaVendorRow) => r.availability_pct,
+    getValue: (r) => r.availability_pct,
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
   },
   {
     label: "Must-Have Avail %",
     tooltip: "Availability percentage for priority SKUs flagged as must-have. Target: ≥90%.",
-    getValue: (r: OlaVendorRow) => r.must_have_availability_pct,
+    getValue: (r) => r.must_have_availability_pct,
+    format: (v) => `${(v * 100).toFixed(1)}%`,
+    higherIsBetter: true,
+  },
+  {
+    label: "SKU Reliability %",
+    tooltip: "Percentage of SKUs maintaining ≥80% availability over the tracking period.",
+    getValue: (r) => r.sku_reliability_pct,
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
   },
@@ -54,23 +46,37 @@ const SOS_METRICS: MetricDef[] = [
   {
     label: "Keywords Tracked",
     tooltip: "Total unique search keywords being monitored for ranking and visibility on this platform.",
-    getValue: (r: SosVendorRow) => r.keywords_tracked,
+    getValue: (r) => r.keywords_tracked,
     format: (v) => v.toLocaleString(),
     higherIsBetter: true,
   },
   {
     label: "Top10 Presence %",
     tooltip: "Percentage of keyword-day observations where at least one HUL product appeared in the top 10 results.",
-    getValue: (r: SosVendorRow) => r.top10_presence_pct,
+    getValue: (r) => r.top10_presence_pct,
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
   },
   {
     label: "Elite Share %",
     tooltip: "% of Top 10 listings that rank within positions 1–3. Measures premium positioning strength.",
-    getValue: (r: SosVendorRow) => r.elite_rank_share_pct,
+    getValue: (r) => r.elite_rank_share_pct,
     format: (v) => `${(v * 100).toFixed(1)}%`,
     higherIsBetter: true,
+  },
+  {
+    label: "Organic Share %",
+    tooltip: "Percentage of top-10 listings that are organic (non-sponsored). Higher = stronger natural positioning.",
+    getValue: (r) => r.organic_share_pct,
+    format: (v) => `${(v * 100).toFixed(1)}%`,
+    higherIsBetter: true,
+  },
+  {
+    label: "Rank Volatility",
+    tooltip: "Average standard deviation of daily rank across keywords. Lower = more stable rankings.",
+    getValue: (r) => r.avg_rank_volatility,
+    format: (v) => v.toFixed(2),
+    higherIsBetter: false,
   },
 ];
 
@@ -87,24 +93,18 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
   useEffect(() => {
     if (variant === "ola") {
       supabase
-        .from("vendor_health_overview_mat")
-        .select("platform, skus_tracked, availability_pct")
+        .from("ola_vendor_health_mat")
+        .select("platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct")
         .then(({ data }) => {
-          if (data) setRows(data.filter((r: any) => r.platform).map((r: any) => ({
-            ...r,
-            must_have_availability_pct: null,
-            sku_reliability_pct: null,
-          })));
+          if (data) setRows(data.filter((r: any) => r.platform));
           setLoading(false);
         });
     } else {
       supabase
         .from("sos_vendor_health_mat")
-        .select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct")
+        .select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct, organic_share_pct, avg_rank_volatility")
         .then(({ data }) => {
-          if (data) setRows(data.filter((r: any) => r.platform).map((r: any) => ({
-            ...r,
-          })));
+          if (data) setRows(data.filter((r: any) => r.platform));
           setLoading(false);
         });
     }
@@ -176,7 +176,9 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
                         {gap != null ? (
                           metric.label.includes("Tracked")
                             ? gap.value.toLocaleString()
-                            : `${(gap.value * 100).toFixed(1)}pp`
+                            : metric.label === "Rank Volatility"
+                              ? gap.value.toFixed(2)
+                              : `${(gap.value * 100).toFixed(1)}pp`
                         ) : "—"}
                       </p>
                     )}
