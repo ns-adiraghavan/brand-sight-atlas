@@ -68,10 +68,10 @@ export default function ShareOfSearch() {
     Promise.all([
       supabase.from("sos_exec_summary_mat").select("platform, top10_presence_pct, elite_rank_share_pct"),
       supabase.from("sos_rank_distribution_mat").select("rank_bucket, listing_count, platform"),
-      supabase.from("sos_keyword_volatility").select("search_keyword, mean_rank, rank_volatility, platform")
+      supabase.from("sos_keyword_volatility_mat").select("search_keyword, mean_rank, rank_volatility, platform")
         .order("rank_volatility", { ascending: false })
         .limit(20),
-      supabase.from("sos_keyword_risk").select("search_keyword, mean_rank, performance_band, platform")
+      supabase.from("sos_keyword_risk_mat").select("search_keyword, mean_rank, performance_band, platform")
         .limit(10),
     ]).then(([execRes, distRes, volRes, riskRes]) => {
       if (execRes.data) {
