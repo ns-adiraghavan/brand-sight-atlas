@@ -113,7 +113,7 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
     const catData = (catRes.data ?? []) as any[];
     const catMap = new Map<string, Record<string, number | null>>();
     for (const row of catData) {
-      const cat = row.business_group_clean as string;
+      const cat = row.business_group as string;
       if (!catMap.has(cat)) catMap.set(cat, {});
       catMap.get(cat)![row.platform as string] = row.availability_pct as number;
     }
