@@ -74,6 +74,33 @@ export type Database = {
         }
         Relationships: []
       }
+      ola_bottom_skus_mat: {
+        Row: {
+          base_pack: string | null
+          business_group_clean: string | null
+          platform: string | null
+          risk_band: string | null
+          sku_availability_ratio: number | null
+          total_days: number | null
+        }
+        Insert: {
+          base_pack?: string | null
+          business_group_clean?: string | null
+          platform?: string | null
+          risk_band?: string | null
+          sku_availability_ratio?: number | null
+          total_days?: number | null
+        }
+        Update: {
+          base_pack?: string | null
+          business_group_clean?: string | null
+          platform?: string | null
+          risk_band?: string | null
+          sku_availability_ratio?: number | null
+          total_days?: number | null
+        }
+        Relationships: []
+      }
       ola_category_health_mat: {
         Row: {
           availability_pct: number | null

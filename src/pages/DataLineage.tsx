@@ -6,7 +6,7 @@ const DATA_SOURCE_MAP = [
   { component: "AvailabilityTrendChart", page: "OLA", table: "ola_weekly_trend_mat", columns: "week, platform, availability_pct, must_have_availability_pct" },
   { component: "AvailabilityDistribution", page: "OLA", table: "ola_availability_distribution_mat", columns: "availability_band, platform, sku_count" },
   { component: "PincodeVolatilityScatter", page: "OLA", table: "ola_pincode_volatility_mat", columns: "location, platform, avg_availability, volatility_index" },
-  { component: "BottomSKUsTable", page: "OLA", table: "ola_bottom_skus", columns: "base_pack, business_group_clean, platform, risk_band, sku_availability_ratio, total_days" },
+  { component: "BottomSKUsTable", page: "OLA", table: "ola_bottom_skus_mat", columns: "base_pack, business_group_clean, platform, risk_band, sku_availability_ratio, total_days" },
   { component: "VendorHealthOverview (OLA)", page: "OLA", table: "ola_vendor_health_mat", columns: "platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct" },
   { component: "ExecutionDiagnostics (OLA)", page: "OLA", table: "ola_vendor_health_mat, ola_category_health_mat, ola_pincode_volatility_mat, ola_weekly_trend_mat", columns: "platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct, business_group, location, avg_availability, volatility_index, week" },
   { component: "KeyTakeaways (OLA)", page: "OLA", table: "ola_exec_summary_mat, ola_weekly_trend_mat", columns: "platform, availability_pct, must_have_availability_pct, week" },
