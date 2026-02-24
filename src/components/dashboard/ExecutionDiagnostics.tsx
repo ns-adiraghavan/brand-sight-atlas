@@ -2,22 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { SectionHeader } from "./SectionHeader";
 import { MetricTooltip } from "./MetricTooltip";
-import { ArrowRight, Database, MapPin, Calendar, BarChart3 } from "lucide-react";
-
-interface OlaVendorRow {
-  platform: string;
-  skus_tracked: number;
-  availability_pct: number | null;
-  must_have_availability_pct: number | null;
-  sku_reliability_pct: number | null;
-}
-
-interface SosVendorRow {
-  platform: string;
-  keywords_tracked: number;
-  top10_presence_pct: number | null;
-  elite_rank_share_pct: number | null;
-}
+import { ArrowRight, Database, MapPin, Calendar, BarChart3, AlertTriangle } from "lucide-react";
 
 interface VendorGap {
   metric: string;
@@ -26,6 +11,7 @@ interface VendorGap {
   gap: number;
   gapLabel: string;
   status: "success" | "warning" | "danger";
+  isPct: boolean;
 }
 
 interface CategoryRow {
@@ -37,6 +23,7 @@ interface CoverageRow {
   label: string;
   icon: React.ReactNode;
   platforms: Record<string, string>;
+  imbalance?: string | null;
 }
 
 interface ExecutionDiagnosticsProps {
@@ -75,10 +62,11 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   }, [variant]);
 
   async function loadOla() {
-    const [vendorRes, catRes, pinRes] = await Promise.all([
-      supabase.from("vendor_health_overview_mat").select("platform, skus_tracked, availability_pct"),
+    const [vendorRes, catRes, pinRes, weekRes] = await Promise.all([
+      supabase.from("ola_vendor_health_mat").select("platform, skus_tracked, availability_pct, must_have_availability_pct, sku_reliability_pct"),
       supabase.from("ola_category_health_mat").select("business_group, availability_pct, platform"),
       supabase.from("ola_pincode_volatility_mat").select("platform, location, avg_availability, volatility_index"),
+      supabase.from("ola_weekly_trend_mat").select("platform, week"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
@@ -102,10 +90,13 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
           gap: gapVal,
           gapLabel: `${gapPP.toFixed(1)}pp`,
           status: gapStatus(gapPP, thresholdPP),
+          isPct: true,
         });
       };
 
       addGap("Availability", "Overall availability % gap between platforms.", "availability_pct", 5);
+      addGap("Must-Have Avail %", "Gap in must-have SKU availability between platforms. Target: ≥90%.", "must_have_availability_pct", 5);
+      addGap("SKU Reliability %", "Gap in SKU reliability (% of SKUs with ≥80% availability) between platforms.", "sku_reliability_pct", 5);
       setGaps(gapMetrics);
     }
 
@@ -134,16 +125,35 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       locByPlatform.get(p)!.add(row.location as string);
     }
 
+    // Weeks of data
+    const weeksByPlatform = new Map<string, Set<string>>();
+    for (const row of (weekRes.data ?? []) as any[]) {
+      const p = row.platform as string;
+      if (!weeksByPlatform.has(p)) weeksByPlatform.set(p, new Set());
+      weeksByPlatform.get(p)!.add(row.week as string);
+    }
+
+    const skuCounts = plats.map((p) => (vendors.find((v: any) => v.platform === p) as any)?.skus_tracked ?? 0);
+    const skuImbalance = plats.length === 2 && Math.max(...skuCounts) / Math.max(Math.min(...skuCounts), 1) > 1.5
+      ? `${(Math.max(...skuCounts) / Math.max(Math.min(...skuCounts), 1)).toFixed(1)}x coverage imbalance`
+      : null;
+
     const coverageRows: CoverageRow[] = [
       {
         label: "SKUs Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
         platforms: Object.fromEntries(plats.map((p) => [p, Math.round((vendors.find((v: any) => v.platform === p) as any)?.skus_tracked ?? 0).toLocaleString()])),
+        imbalance: skuImbalance,
       },
       {
         label: "Locations",
         icon: <MapPin className="w-3.5 h-3.5 text-muted-foreground" />,
         platforms: Object.fromEntries(plats.map((p) => [p, (locByPlatform.get(p)?.size ?? 0).toLocaleString()])),
+      },
+      {
+        label: "Weeks of Data",
+        icon: <Calendar className="w-3.5 h-3.5 text-muted-foreground" />,
+        platforms: Object.fromEntries(plats.map((p) => [p, (weeksByPlatform.get(p)?.size ?? 0).toLocaleString()])),
       },
     ];
     setCoverage(coverageRows);
@@ -151,9 +161,10 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
   }
 
   async function loadSos() {
-    const [vendorRes, riskRes] = await Promise.all([
-      supabase.from("sos_vendor_health_mat").select("platform, keywords_tracked, top10_presence_pct"),
+    const [vendorRes, riskRes, weekRes] = await Promise.all([
+      supabase.from("sos_vendor_health_mat").select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct, avg_rank_volatility"),
       supabase.from("sos_keyword_risk_mat").select("search_keyword, performance_band, platform"),
+      supabase.from("sos_weekly_trend_mat").select("platform, week"),
     ]);
 
     const vendors = (vendorRes.data ?? []).filter((r: any) => r.platform);
@@ -165,23 +176,40 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       const [a, b] = vendors as any[];
       const gapMetrics: VendorGap[] = [];
 
-      const addGap = (label: string, tooltip: string, key: string, thresholdPP: number) => {
+      const addGapPct = (label: string, tooltip: string, key: string, thresholdPP: number) => {
         const va = (a[key] ?? 0) as number;
         const vb = (b[key] ?? 0) as number;
         const gapVal = Math.abs(va - vb);
-        const isPct = key.includes("pct");
-        const gapPP = isPct ? gapVal * 100 : gapVal;
+        const gapPP = gapVal * 100;
         gapMetrics.push({
           metric: label,
           tooltip,
           platforms: { [a.platform]: va, [b.platform]: vb },
           gap: gapVal,
-          gapLabel: isPct ? `${gapPP.toFixed(1)}pp` : gapVal.toFixed(2),
+          gapLabel: `${gapPP.toFixed(1)}pp`,
           status: gapStatus(gapPP, thresholdPP),
+          isPct: true,
         });
       };
 
-      addGap("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
+      const addGapNum = (label: string, tooltip: string, key: string, threshold: number) => {
+        const va = (a[key] ?? 0) as number;
+        const vb = (b[key] ?? 0) as number;
+        const gapVal = Math.abs(va - vb);
+        gapMetrics.push({
+          metric: label,
+          tooltip,
+          platforms: { [a.platform]: va, [b.platform]: vb },
+          gap: gapVal,
+          gapLabel: gapVal.toFixed(2),
+          status: gapStatus(gapVal, threshold),
+          isPct: false,
+        });
+      };
+
+      addGapPct("Page 1 Presence", "Gap in top-10 search result presence between platforms.", "top10_presence_pct", 5);
+      addGapPct("Elite Share %", "Gap in rank 1–3 share between platforms.", "elite_rank_share_pct", 5);
+      addGapNum("Rank Stability", "Difference in average rank volatility. Lower volatility = more stable.", "avg_rank_volatility", 2);
       setGaps(gapMetrics);
     }
 
@@ -203,12 +231,25 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
       }));
     setCategories(catRows);
 
+    // Weeks of data
+    const weeksByPlatform = new Map<string, Set<string>>();
+    for (const row of (weekRes.data ?? []) as any[]) {
+      const p = row.platform as string;
+      if (!weeksByPlatform.has(p)) weeksByPlatform.set(p, new Set());
+      weeksByPlatform.get(p)!.add(row.week as string);
+    }
+
     // Coverage
     const coverageRows: CoverageRow[] = [
       {
         label: "Keywords Tracked",
         icon: <Database className="w-3.5 h-3.5 text-muted-foreground" />,
         platforms: Object.fromEntries(plats.map((p) => [p, Math.round((vendors.find((v: any) => v.platform === p) as any)?.keywords_tracked ?? 0).toLocaleString()])),
+      },
+      {
+        label: "Weeks of Data",
+        icon: <Calendar className="w-3.5 h-3.5 text-muted-foreground" />,
+        platforms: Object.fromEntries(plats.map((p) => [p, (weeksByPlatform.get(p)?.size ?? 0).toLocaleString()])),
       },
     ];
     setCoverage(coverageRows);
@@ -264,14 +305,13 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
                   <div className="flex items-center gap-2">
                     {platforms.map((p) => {
                       const val = g.platforms[p];
-                      const isPct = g.metric !== "Rank Stability";
                       return (
                         <div key={p} className="flex-1 flex items-center justify-between bg-muted/30 rounded px-2.5 py-1.5">
                           <span className={`text-[10px] uppercase tracking-wide ${p === "dmart" ? "text-platform-dmart" : "text-platform-jiomart"}`}>
                             {capitalize(p)}
                           </span>
                           <span className="text-sm font-semibold text-foreground">
-                            {isPct ? `${(val * 100).toFixed(1)}%` : val.toFixed(2)}
+                            {g.isPct ? `${(val * 100).toFixed(1)}%` : val.toFixed(2)}
                           </span>
                         </div>
                       );
@@ -348,6 +388,12 @@ export function ExecutionDiagnostics({ variant }: ExecutionDiagnosticsProps) {
                       </div>
                     ))}
                   </div>
+                  {row.imbalance && (
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <AlertTriangle className="w-3 h-3 text-status-warning" />
+                      <span className="text-[10px] text-status-warning font-medium">{row.imbalance}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
