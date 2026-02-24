@@ -99,12 +99,11 @@ export function VendorHealthOverview({ variant }: VendorHealthOverviewProps) {
         });
     } else {
       supabase
-        .from("vendor_search_overview_mat")
-        .select("platform, keywords_tracked, top10_presence_pct")
+        .from("sos_vendor_health_mat")
+        .select("platform, keywords_tracked, top10_presence_pct, elite_rank_share_pct")
         .then(({ data }) => {
           if (data) setRows(data.filter((r: any) => r.platform).map((r: any) => ({
             ...r,
-            elite_rank_share_pct: null,
           })));
           setLoading(false);
         });
